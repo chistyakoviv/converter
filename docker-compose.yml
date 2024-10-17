@@ -1,0 +1,17 @@
+services:
+  converter:
+    build:
+      dockerfile: ./docker/development/converter/Dockerfile
+    volumes:
+      - ./:/go/src/github.com/chistyakoviv/converter
+    # entr should be started with tty, otherwise it requires -n flag
+    # see the error: 'entr: unable to get terminal attributes, use '-n' to run non-interactively'
+    tty: true
+    ports:
+      - 80:8080 # http
+
+  golang-cli:
+    image: golang:1.23.2-alpine3.20
+    volumes:
+      - ./:/go/src/github.com/chistyakoviv/converter
+    working_dir: /go/src/github.com/chistyakoviv/converter
