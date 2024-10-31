@@ -9,9 +9,8 @@ import (
 )
 
 func Bootstrap(c di.Container) {
-	cfg := config.MustLoad()
-
 	c.RegisterSingleton("config", func(c di.Container) *config.Config {
+		cfg := config.MustLoad()
 		return cfg
 	})
 

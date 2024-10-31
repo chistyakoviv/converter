@@ -70,14 +70,14 @@ func (c *container) Resolve(name string) (interface{}, error) {
 	if instance, ok := c.singletons[name]; ok && instance != nil {
 		return instance, nil
 	} else if ok && instance == nil {
-		// Create singleton instance
-		result := constructor.Call(nil)
+		// Create singleton instance with container passed as argument
+		result := constructor.Call([]reflect.Value{reflect.ValueOf(c)})
 		c.singletons[name] = result[0].Interface()
 		return c.singletons[name], nil
 	}
 
-	// Call constructor for non-singleton service
-	result := constructor.Call(nil)
+	// Call constructor for non-singleton service with container passed as argument
+	result := constructor.Call([]reflect.Value{reflect.ValueOf(c)})
 	return result[0].Interface(), nil
 }
 
