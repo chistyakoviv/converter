@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/app"
 )
 
 func main() {
-	config := config.MustLoad()
+	app := app.NewApp()
+	app.Run()
+}
 
-	fmt.Printf("config: %+v\n", config)
+func test[V any](v V) V {
+	return v
 }
