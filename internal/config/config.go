@@ -30,27 +30,28 @@ type HTTPServer struct {
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
 func MustLoad() *Config {
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		log.Fatal("CONFIG_PATH is not set")
-	}
-
-	// check if file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		log.Fatalf("config file %s does not exist", configPath)
-	}
-
 	var cfg Config
 
-	// Read from file
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		log.Fatalf("failed to load config: %v", err)
+	configPath := os.Getenv("CONFIG_PATH")
+
+	if configPath != "" {
+		// log.Fatal("CONFIG_PATH is not set")
+
+		// check if file exists
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			log.Fatalf("config file %s does not exist", configPath)
+		}
+
+		// Read from file
+		if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+			log.Fatalf("failed to load config from %s: %v", configPath, err)
+		}
 	}
 
 	// Read from environment
-	// if err := cleanenv.ReadEnv(&cfg); err != nil {
-	// 	log.Fatalf("failed to read env: %v", err)
-	// }
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		log.Fatalf("failed to load config from env: %v", err)
+	}
 
 	return &cfg
 }
