@@ -1,6 +1,10 @@
 package app
 
-import "github.com/chistyakoviv/converter/internal/di"
+import (
+	"log/slog"
+
+	"github.com/chistyakoviv/converter/internal/di"
+)
 
 type Application interface {
 	Run()
@@ -29,5 +33,9 @@ func (a *app) init() {
 }
 
 func (a *app) Run() {
+	cfg := resolveConfig(a.container)
+	logger := resolveLogger(a.container)
 
+	logger.Info("Application is up and running", slog.String("env", cfg.Env))
+	logger.Debug("Application is running in DEBUG mode")
 }

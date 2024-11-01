@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 )
 
 type Container interface {
@@ -18,7 +17,9 @@ type Container interface {
 type container struct {
 	services   map[string]reflect.Value
 	singletons map[string]interface{}
-	mutex      sync.Mutex
+	// For now the implementation is not thread safe,
+	// because nested dependency resolving causes a deadlock
+	// mutex      sync.Mutex
 }
 
 // NewContainer creates a new Container instance
@@ -31,16 +32,16 @@ func NewContainer() *container {
 
 // Register registers a service with a constructor function
 func (c *container) Register(name string, constructor interface{}) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	// c.mutex.Lock()
+	// defer c.mutex.Unlock()
 
 	c.services[name] = reflect.ValueOf(constructor)
 }
 
 // RegisterSingleton registers a singleton service
 func (c *container) RegisterSingleton(name string, constructor interface{}) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	// c.mutex.Lock()
+	// defer c.mutex.Unlock()
 
 	c.services[name] = reflect.ValueOf(constructor)
 	c.singletons[name] = nil // Placeholder to indicate this is a singleton
@@ -48,8 +49,8 @@ func (c *container) RegisterSingleton(name string, constructor interface{}) {
 
 // Has checks if a service is registered
 func (c *container) Has(name string) bool {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	// c.mutex.Lock()
+	// defer c.mutex.Unlock()
 
 	_, ok := c.services[name]
 	return ok
@@ -57,8 +58,8 @@ func (c *container) Has(name string) bool {
 
 // Resolve resolves a registered service and returns an interface
 func (c *container) Resolve(name string) (interface{}, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	// c.mutex.Lock()
+	// defer c.mutex.Unlock()
 
 	// Check if the service exists
 	constructor, ok := c.services[name]
