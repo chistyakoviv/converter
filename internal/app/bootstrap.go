@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/db"
+	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/di"
 )
 
@@ -32,7 +34,17 @@ func resolveLogger(c di.Container) *slog.Logger {
 	return logger
 }
 
-func Bootstrap(c di.Container) {
+func resolveDbClient(c di.Container) db.Client {
+	client, err := di.Resolve[db.Client](c, "db")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve db client definition: %v", err)
+	}
+
+	return client
+}
+
+func bootstrap(c di.Container) {
 	c.RegisterSingleton("config", func(c di.Container) *config.Config {
 		cfg := config.MustLoad()
 		return cfg
@@ -60,4 +72,17 @@ func Bootstrap(c di.Container) {
 
 		return logger
 	})
+
+	c.RegisterSingleton("db", func(c di.Container) db.Client {
+		cfg := resolveConfig(c)
+		client, err := pg.NewClient(c.Context(), cfg.Postgres.Dsn)
+
+		if err != nil {
+			log.Fatalf("failed to connect to db: %v", err)
+		}
+
+		return client
+	})
+
+	resolveDbClient(c)
 }

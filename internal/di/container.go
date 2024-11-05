@@ -1,12 +1,14 @@
 package di
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
 )
 
 type Container interface {
+	Context() context.Context
 	Register(name string, constructor interface{})
 	RegisterSingleton(name string, constructor interface{})
 	Resolve(name string) (interface{}, error)
@@ -15,6 +17,7 @@ type Container interface {
 
 // Container struct
 type container struct {
+	ctx        context.Context
 	services   map[string]reflect.Value
 	singletons map[string]interface{}
 	// For now the implementation is not thread safe,
@@ -23,11 +26,17 @@ type container struct {
 }
 
 // NewContainer creates a new Container instance
-func NewContainer() *container {
+func NewContainer(ctx context.Context) *container {
 	return &container{
+		ctx:        ctx,
 		services:   make(map[string]reflect.Value),
 		singletons: make(map[string]interface{}),
 	}
+}
+
+// Context returns the context
+func (c *container) Context() context.Context {
+	return c.ctx
 }
 
 // Register registers a service with a constructor function

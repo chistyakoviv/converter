@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+
 	"github.com/chistyakoviv/converter/internal/app"
 )
 
 func main() {
-	app := app.NewApp()
+	ctx := context.Background()
+	app := app.NewApp(ctx)
 	app.Run()
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/chistyakoviv/converter/internal/di"
@@ -15,8 +16,8 @@ type app struct {
 	container di.Container
 }
 
-func NewApp() Application {
-	container := di.NewContainer()
+func NewApp(ctx context.Context) Application {
+	container := di.NewContainer(ctx)
 	a := &app{
 		container: container,
 	}
@@ -29,7 +30,7 @@ func (a *app) Container() di.Container {
 }
 
 func (a *app) init() {
-	Bootstrap(a.container)
+	bootstrap(a.container)
 }
 
 func (a *app) Run() {

@@ -15,11 +15,12 @@ type Config struct {
 }
 
 type Postgres struct {
-	User     string `yaml:"user" env:"POSTGRES_USER" env-default:"app"`
-	Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"secret"`
-	Db       string `yaml:"db" env:"POSTGRES_DB" env-default:"app"`
-	Host     string `yaml:"host" env:"POSTGRES_HOST" env-default:"localhost"`
-	Port     string `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
+	Dsn string `yaml:"dsn" env:"POSTGRES_DSN" env-required:"true"`
+	// User     string `yaml:"user" env:"POSTGRES_USER" env-default:"app"`
+	// Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-default:"secret"`
+	// Db       string `yaml:"db" env:"POSTGRES_DB" env-default:"app"`
+	// Host     string `yaml:"host" env:"POSTGRES_HOST" env-default:"localhost"`
+	// Port     string `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
 }
 
 type HTTPServer struct {
