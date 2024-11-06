@@ -78,7 +78,7 @@ func bootstrap(c di.Container) {
 		client, err := pg.NewClient(c.Context(), cfg.Postgres.Dsn)
 
 		if err != nil {
-			log.Fatalf("failed to connect to db: %v", err)
+			log.Fatalf("failed to create db client: %v", err)
 		}
 
 		return client
