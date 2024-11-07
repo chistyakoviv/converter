@@ -24,4 +24,4 @@ RUN go mod download
 # When you use shell form, the executable runs as a child process to a shell, which doesn't pass signals.
 # This means that the program running in the container can't detect OS signals like SIGTERM and SIGKILL and respond to them correctly.
 # see https://docs.docker.com/reference/build-checks/json-args-recommended/
-CMD find . -name "*.go" | entr -r go run ./cmd/converter/main.go
+CMD find . -name "*.go" | CONFIG_PATH=config/local.yml entr -r go run ./cmd/converter/main.go
