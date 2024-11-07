@@ -21,11 +21,11 @@ type app struct {
 }
 
 func NewApp(ctx context.Context) Application {
-	container := di.NewContainer(ctx)
+	container := di.NewContainer()
 	a := &app{
 		container: container,
 	}
-	a.init()
+	a.init(ctx)
 	return a
 }
 
@@ -33,8 +33,8 @@ func (a *app) Container() di.Container {
 	return a.container
 }
 
-func (a *app) init() {
-	bootstrap(a.container)
+func (a *app) init(ctx context.Context) {
+	bootstrap(ctx, a.container)
 }
 
 func (a *app) Run(ctx context.Context) {

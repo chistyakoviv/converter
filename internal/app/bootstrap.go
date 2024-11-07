@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"log/slog"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/di"
+	"github.com/chistyakoviv/converter/internal/lib/sl"
 )
 
 // Retrieves the application configuration from the dependency injection container,
@@ -44,7 +46,7 @@ func resolveDbClient(c di.Container) db.Client {
 	return client
 }
 
-func bootstrap(c di.Container) {
+func bootstrap(ctx context.Context, c di.Container) {
 	c.RegisterSingleton("config", func(c di.Container) *config.Config {
 		cfg := config.MustLoad()
 		return cfg
@@ -75,10 +77,13 @@ func bootstrap(c di.Container) {
 
 	c.RegisterSingleton("db", func(c di.Container) db.Client {
 		cfg := resolveConfig(c)
-		client, err := pg.NewClient(c.Context(), cfg.Postgres.Dsn)
+		logger := resolveLogger(c)
+
+		client, err := pg.NewClient(ctx, cfg.Postgres.Dsn)
 
 		if err != nil {
-			log.Fatalf("failed to create db client: %v", err)
+			logger.Error("failed to create db client", sl.Err(err))
+			os.Exit(1)
 		}
 
 		return client
