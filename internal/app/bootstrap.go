@@ -6,11 +6,14 @@ import (
 	"log/slog"
 	"os"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/lib/sl"
+	"github.com/chistyakoviv/converter/internal/repository"
+	"github.com/chistyakoviv/converter/internal/repository/conversion"
 )
 
 // Retrieves the application configuration from the dependency injection container,
@@ -44,6 +47,16 @@ func resolveDbClient(c di.Container) db.Client {
 	}
 
 	return client
+}
+
+func resolveStatementBuilder(c di.Container) sq.StatementBuilderType {
+	sq, err := di.Resolve[sq.StatementBuilderType](c, "sq")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve statement builder definition: %v", err)
+	}
+
+	return sq
 }
 
 func bootstrap(ctx context.Context, c di.Container) {
@@ -89,5 +102,13 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return client
 	})
 
-	resolveDbClient(c)
+	c.RegisterSingleton("sq", func(c di.Container) sq.StatementBuilderType {
+		return sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	})
+
+	// Repositories
+	c.RegisterSingleton("conversion_queue_repository", func(c di.Container) repository.ConversionQueueRepository {
+		return conversion.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
+	})
+
 }
