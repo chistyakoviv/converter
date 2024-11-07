@@ -2,6 +2,7 @@ package conversion
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/db"
@@ -52,21 +53,21 @@ func (r *repo) Create(ctx context.Context, file *model.Conversion) (int64, error
 	}
 
 	query := db.Query{
-		Name:     "conversion_queue_repository.Create",
+		Name:     "repository.conversion_queue.Create",
 		QueryRaw: sql,
 	}
 
 	var id int64
 	err = r.db.DB().QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("%s: %w", query.Name, err)
 	}
 
 	return id, nil
 }
 
 func (r *repo) GetByFullpath(ctx context.Context, fullpath string) (*model.Conversion, error) {
-	builder := r.sq.Select("*").From(tablename).Where(sq.Eq{fullpathColumn: fullpath})
+	builder := r.sq.Select("*").From(tablename).Where(sq.Eq{fullpathColumn: fullpath}).Limit(1)
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
@@ -74,7 +75,7 @@ func (r *repo) GetByFullpath(ctx context.Context, fullpath string) (*model.Conve
 	}
 
 	query := db.Query{
-		Name:     "conversion_queue_repository.GetByFullpath",
+		Name:     "repository.conversion_queue.GetByFullpath",
 		QueryRaw: sql,
 	}
 
@@ -94,10 +95,10 @@ func (r *repo) GetByFullpath(ctx context.Context, fullpath string) (*model.Conve
 		&file.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, db.ErrNotFound
+		return nil, fmt.Errorf("%s: %w", query.Name, db.ErrNotFound)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", query.Name, err)
 	}
 
 	return &file, nil

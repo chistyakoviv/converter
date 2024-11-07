@@ -13,6 +13,7 @@ type pg struct {
 	dbc *pgxpool.Pool
 }
 
+// Pass logger as a dependency and use query name to log all the sql requests in dev mode if needed
 func NewDB(dbc *pgxpool.Pool) db.DB {
 	return &pg{
 		dbc: dbc,
