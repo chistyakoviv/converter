@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/chistyakoviv/converter/internal/di"
+	"github.com/chistyakoviv/converter/internal/lib/sl"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -52,48 +54,59 @@ func (a *app) Run(ctx context.Context) {
 
 	wg.Add(1)
 
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
+	router.Use(middleware.NoCache)
+
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
+	})
+
+	// TODO: move to di container
+	srv := &http.Server{
+		Addr:         cfg.HTTPServer.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.ReadTimeout,
+		WriteTimeout: cfg.HTTPServer.WriteTimeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	logger.Info("starting server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
+
 	go func() {
 		// http router
 		defer wg.Done()
 
-		router := chi.NewRouter()
-
-		router.Use(middleware.RequestID)
-		router.Use(middleware.Logger)
-		router.Use(middleware.Recoverer)
-		router.Use(middleware.URLFormat)
-		router.Use(middleware.NoCache)
-
-		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("hi"))
-		})
-
-		srv := &http.Server{
-			Addr:         cfg.HTTPServer.Address,
-			Handler:      router,
-			ReadTimeout:  cfg.HTTPServer.ReadTimeout,
-			WriteTimeout: cfg.HTTPServer.WriteTimeout,
-			IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+		// ListenAndServe always returns a non-nil error. After [Server.Shutdown] or [Server.Close], the returned error is [ErrServerClosed].
+		err := srv.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			logger.Info("http server is closing gracefully")
+		} else {
+			logger.Error("http server error", sl.Err(err))
 		}
-
-		logger.Info("starting server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
-
-		if err := srv.ListenAndServe(); err != nil {
-			logger.Error("failed to start server")
-		}
+		logger.Info("http server stopped")
 	}()
 
-	a.gracefulShutdown(ctx, cancel, wg)
+	a.gracefulShutdown(ctx, cancel, wg, srv)
 }
 
-func (a *app) gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup) {
+// TODO: refactor graceful shutdown to properly terminate all components
+func (a *app) gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup, srv *http.Server) {
 	logger := resolveLogger(a.container)
 
 	select {
 	case <-ctx.Done():
-		logger.Info("terminating: context cancelled")
+		logger.Info("terminating: context canceled")
 	case <-waitSignal():
 		logger.Info("terminating: via signal")
+	}
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("failed to stop server", sl.Err(err))
 	}
 
 	cancel()
