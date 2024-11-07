@@ -24,9 +24,10 @@ type Postgres struct {
 }
 
 type HTTPServer struct {
-	Address     string        `yaml:"address" env:"ADDRESS" env-default:"localhost:8080"`
-	ReadTimeout time.Duration `yaml:"read_timeout" env:"READ_TIMEOUT" env-required:"true"`
-	IdleTimeout time.Duration `yaml:"idle_timeout" env:"IDLE_TIMEOUT" env-required:"true"`
+	Address      string        `yaml:"address" env:"ADDRESS" env-default:"localhost:8080"`
+	ReadTimeout  time.Duration `yaml:"read_timeout" env:"READ_TIMEOUT" env-required:"true"`
+	WriteTimeout time.Duration `yaml:"write_timeout" env:"WRITE_TIMEOUT" env-required:"true"`
+	IdleTimeout  time.Duration `yaml:"idle_timeout" env:"IDLE_TIMEOUT" env-required:"true"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown

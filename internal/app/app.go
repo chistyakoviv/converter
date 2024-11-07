@@ -3,12 +3,15 @@ package app
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
 	"github.com/chistyakoviv/converter/internal/di"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Application interface {
@@ -43,7 +46,6 @@ func (a *app) Run(ctx context.Context) {
 	cfg := resolveConfig(a.container)
 	logger := resolveLogger(a.container)
 
-	logger.Info("Application is up and running", slog.String("env", cfg.Env))
 	logger.Debug("Application is running in DEBUG mode")
 
 	wg := &sync.WaitGroup{}
@@ -51,8 +53,34 @@ func (a *app) Run(ctx context.Context) {
 	wg.Add(1)
 
 	go func() {
+		// http router
 		defer wg.Done()
-		// Start http server here
+
+		router := chi.NewRouter()
+
+		router.Use(middleware.RequestID)
+		router.Use(middleware.Logger)
+		router.Use(middleware.Recoverer)
+		router.Use(middleware.URLFormat)
+		router.Use(middleware.NoCache)
+
+		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("hi"))
+		})
+
+		srv := &http.Server{
+			Addr:         cfg.HTTPServer.Address,
+			Handler:      router,
+			ReadTimeout:  cfg.HTTPServer.ReadTimeout,
+			WriteTimeout: cfg.HTTPServer.WriteTimeout,
+			IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+		}
+
+		logger.Info("starting server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
+
+		if err := srv.ListenAndServe(); err != nil {
+			logger.Error("failed to start server")
+		}
 	}()
 
 	a.gracefulShutdown(ctx, cancel, wg)
