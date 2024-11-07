@@ -92,7 +92,7 @@ func bootstrap(ctx context.Context, c di.Container) {
 		cfg := resolveConfig(c)
 		logger := resolveLogger(c)
 
-		client, err := pg.NewClient(ctx, cfg.Postgres.Dsn)
+		client, err := pg.NewClient(ctx, cfg.Postgres.Dsn, logger)
 
 		if err != nil {
 			logger.Error("failed to create db client", sl.Err(err))

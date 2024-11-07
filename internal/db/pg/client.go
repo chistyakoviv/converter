@@ -2,6 +2,7 @@ package pg
 
 import (
 	"context"
+	"log/slog"
 
 	"fmt"
 
@@ -11,10 +12,11 @@ import (
 )
 
 type pgClient struct {
+	logger    *slog.Logger
 	masterDBC db.DB
 }
 
-func NewClient(ctx context.Context, dsn string) (db.Client, error) {
+func NewClient(ctx context.Context, dsn string, logger *slog.Logger) (db.Client, error) {
 	const op = "db.pg.NewClient"
 
 	dbc, err := pgxpool.New(ctx, dsn)
@@ -23,7 +25,12 @@ func NewClient(ctx context.Context, dsn string) (db.Client, error) {
 	}
 
 	return &pgClient{
-		masterDBC: &pg{dbc: dbc},
+		masterDBC: NewDB(
+			"master db",
+			dbc,
+			logger,
+		),
+		logger: logger,
 	}, nil
 }
 
