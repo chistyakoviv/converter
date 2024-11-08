@@ -12,10 +12,12 @@ import (
 	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
+	customLogger "github.com/chistyakoviv/converter/internal/http-server/middleware/logger"
 	"github.com/chistyakoviv/converter/internal/lib/sl"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func bootstrap(ctx context.Context, c di.Container) {
@@ -66,7 +68,19 @@ func bootstrap(ctx context.Context, c di.Container) {
 	})
 
 	c.RegisterSingleton("router", func(c di.Container) *chi.Mux {
-		return chi.NewRouter()
+		router := chi.NewRouter()
+		logger := resolveLogger(c)
+
+		router.Use(middleware.RequestID)
+		// Replace middleware.Logger with custom logger to keep logs consistent with the rest of the application
+		// router.Use(middleware.Logger)
+		router.Use(customLogger.New(logger))
+		// router.Use(middleware.Heartbeat("/ping"))
+		router.Use(middleware.Recoverer)
+		router.Use(middleware.URLFormat)
+		router.Use(middleware.NoCache)
+
+		return router
 	})
 
 	c.RegisterSingleton("httpServer", func(c di.Container) *http.Server {
