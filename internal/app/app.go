@@ -51,7 +51,7 @@ func (a *app) Run(ctx context.Context) {
 	initRoutes(resolveRouter(a.container))
 
 	go func() {
-		logger.Info("starting server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
+		logger.Info("starting http server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
 
 		srv := resolveHttpServer(a.container)
 		dq.Add(func() error {
