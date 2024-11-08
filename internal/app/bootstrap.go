@@ -52,8 +52,15 @@ func bootstrap(ctx context.Context, c di.Container) {
 	c.RegisterSingleton("db", func(c di.Container) db.Client {
 		cfg := resolveConfig(c)
 		logger := resolveLogger(c)
+		dq := resolveDeferredQ(c)
 
 		client, err := pg.NewClient(ctx, cfg.Postgres.Dsn, logger)
+
+		// Close db connections
+		dq.Add(func() error {
+			defer logger.Info("db connections closed")
+			return client.Close()
+		})
 
 		if err != nil {
 			logger.Error("failed to create db client", sl.Err(err))
