@@ -9,7 +9,7 @@ import (
 type Container interface {
 	Register(name string, constructor interface{})
 	RegisterSingleton(name string, constructor interface{})
-	Resolve(name string) (interface{}, error)
+	resolve(name string) (interface{}, error)
 	Has(name string) bool
 }
 
@@ -19,6 +19,7 @@ type container struct {
 	singletons map[string]interface{}
 	// For now the implementation is not thread safe,
 	// because nested dependency resolving causes a deadlock
+	// TODO: Implement thread safety to ensure the singleton is instantiated only once, even when accessed from multiple goroutines.
 	// mutex      sync.Mutex
 }
 
@@ -57,7 +58,7 @@ func (c *container) Has(name string) bool {
 }
 
 // Resolve resolves a registered service and returns an interface
-func (c *container) Resolve(name string) (interface{}, error) {
+func (c *container) resolve(name string) (interface{}, error) {
 	// c.mutex.Lock()
 	// defer c.mutex.Unlock()
 
@@ -84,7 +85,7 @@ func (c *container) Resolve(name string) (interface{}, error) {
 
 // Resolve is a helper function that attempts to resolve and cast a service to the expected type
 func Resolve[T any](c Container, name string) (T, error) {
-	resolved, err := c.Resolve(name)
+	resolved, err := c.resolve(name)
 	if err != nil {
 		var zero T
 		return zero, err
