@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/chistyakoviv/converter/internal/di"
-	"github.com/chistyakoviv/converter/internal/lib/sl"
+	"github.com/chistyakoviv/converter/internal/lib/slogger"
 )
 
 type Application interface {
@@ -48,7 +48,7 @@ func (a *app) Run(ctx context.Context) {
 
 	logger.Debug("Application is running in DEBUG mode")
 
-	initRoutes(resolveRouter(a.container))
+	initRoutes(ctx, a.container)
 
 	go func() {
 		logger.Info("starting http server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
@@ -61,7 +61,7 @@ func (a *app) Run(ctx context.Context) {
 		// ListenAndServe always returns a non-nil error. After [Server.Shutdown] or [Server.Close], the returned error is [ErrServerClosed].
 		err := srv.ListenAndServe()
 		if !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("http server error", sl.Err(err))
+			logger.Error("http server error", slogger.Err(err))
 		}
 		logger.Info("http server stopped")
 	}()

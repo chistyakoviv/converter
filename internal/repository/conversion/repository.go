@@ -41,10 +41,24 @@ func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.Conversi
 	}
 }
 
-func (r *repo) Create(ctx context.Context, file *model.Conversion) (int64, error) {
+func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, error) {
 	builder := r.sq.Insert(tablename).
-		Columns(idColumn, fullpathColumn, pathColumn, filestemColumn, extColumn, convertToColumn, isDoneColumn, isCanceledColumn, replaceOrigExtColumn, errorCodeColumn, createdAtColumn, updatedAtColumn).
-		Values(file.Id, file.Fullpath, file.Path, file.Filestem, file.Ext, file.ConvertTo, file.IsDone, file.IsCanceled, file.ReplaceOrigExt, file.ErrorCode, file.CreatedAt, file.UpdatedAt).
+		Columns(
+			fullpathColumn,
+			pathColumn,
+			filestemColumn,
+			extColumn,
+			convertToColumn,
+			replaceOrigExtColumn,
+		).
+		Values(
+			file.Fullpath,
+			file.Path,
+			file.Filestem,
+			file.Ext,
+			file.ConvertTo,
+			file.ReplaceOrigExt,
+		).
 		Suffix("RETURNING id")
 
 	sql, args, err := builder.ToSql()
@@ -59,6 +73,7 @@ func (r *repo) Create(ctx context.Context, file *model.Conversion) (int64, error
 
 	var id int64
 	err = r.db.DB().QueryRow(ctx, query, args...).Scan(&id)
+	// TODO: intercept fullpath already exists error
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", query.Name, err)
 	}

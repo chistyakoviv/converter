@@ -10,7 +10,10 @@ import (
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
+	"github.com/chistyakoviv/converter/internal/repository"
+	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 // Retrieves the application configuration from the dependency injection container,
@@ -84,4 +87,36 @@ func resolveDeferredQ(c di.Container) deferredq.DQueue {
 	}
 
 	return dq
+}
+
+func resolveValidator(c di.Container) *validator.Validate {
+	validator, err := di.Resolve[*validator.Validate](c, "validator")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve validator definition: %v", err)
+	}
+
+	return validator
+}
+
+// Repositories
+func resolveConversionQueueRepository(c di.Container) repository.ConversionQueueRepository {
+	repo, err := di.Resolve[repository.ConversionQueueRepository](c, "conversionQueueRepository")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve conversion queue repository definition: %v", err)
+	}
+
+	return repo
+}
+
+// Services
+func resolveConvertationService(c di.Container) service.ConversionService {
+	serv, err := di.Resolve[service.ConversionService](c, "convertationService")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve convertation service definition: %v", err)
+	}
+
+	return serv
 }

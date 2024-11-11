@@ -7,6 +7,6 @@ import (
 )
 
 type ConversionQueueRepository interface {
-	Create(ctx context.Context, file *model.Conversion) (int64, error)
+	Create(ctx context.Context, file *model.ConversionInfo) (int64, error)
 	GetByFullpath(ctx context.Context, fullpath string) (*model.Conversion, error)
 }

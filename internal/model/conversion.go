@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Conversion struct {
 	Id             int64
@@ -15,4 +17,13 @@ type Conversion struct {
 	ErrorCode      int
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type ConversionInfo struct {
+	Fullpath       string
+	Path           string
+	Filestem       string
+	Ext            string
+	ConvertTo      []string
+	ReplaceOrigExt bool
 }

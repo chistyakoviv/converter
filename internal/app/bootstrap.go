@@ -13,11 +13,14 @@ import (
 	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
 	mwLogger "github.com/chistyakoviv/converter/internal/http-server/middleware/logger"
-	"github.com/chistyakoviv/converter/internal/lib/sl"
+	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/repository/conversion"
+	"github.com/chistyakoviv/converter/internal/service"
+	"github.com/chistyakoviv/converter/internal/service/convertation"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
 )
 
 func bootstrap(ctx context.Context, c di.Container) {
@@ -63,7 +66,7 @@ func bootstrap(ctx context.Context, c di.Container) {
 		})
 
 		if err != nil {
-			logger.Error("failed to create db client", sl.Err(err))
+			logger.Error("failed to create db client", slogger.Err(err))
 			os.Exit(1)
 		}
 
@@ -107,8 +110,17 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return deferredq.New(resolveLogger(c))
 	})
 
+	c.RegisterSingleton("validator", func(c di.Container) *validator.Validate {
+		return validator.New()
+	})
+
 	// Repositories
 	c.RegisterSingleton("conversionQueueRepository", func(c di.Container) repository.ConversionQueueRepository {
 		return conversion.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
+	})
+
+	// Services
+	c.RegisterSingleton("conversionService", func(c di.Container) service.ConversionService {
+		return convertation.NewService(resolveConversionQueueRepository(c))
 	})
 }

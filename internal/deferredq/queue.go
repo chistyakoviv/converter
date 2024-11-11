@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/chistyakoviv/converter/internal/lib/sl"
+	"github.com/chistyakoviv/converter/internal/lib/slogger"
 )
 
 type callback func() error
@@ -61,7 +61,7 @@ func (q *queue) Release() {
 		// Block until an error received
 		for i := 0; i < cap(errs); i++ {
 			if err := <-errs; err != nil {
-				q.logger.Error("error from deferred queue", sl.Err(err))
+				q.logger.Error("error from deferred queue", slogger.Err(err))
 			}
 		}
 	})
