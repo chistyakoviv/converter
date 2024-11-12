@@ -1,4 +1,4 @@
-package convertation
+package conversion
 
 import (
 	"context"
