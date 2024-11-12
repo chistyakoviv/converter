@@ -111,11 +111,11 @@ func resolveConversionQueueRepository(c di.Container) repository.ConversionQueue
 }
 
 // Services
-func resolveConvertationService(c di.Container) service.ConversionService {
-	serv, err := di.Resolve[service.ConversionService](c, "convertationService")
+func resolveConversionService(c di.Container) service.ConversionService {
+	serv, err := di.Resolve[service.ConversionService](c, "conversionService")
 
 	if err != nil {
-		log.Fatalf("Couldn't resolve convertation service definition: %v", err)
+		log.Fatalf("Couldn't resolve conversion service definition: %v", err)
 	}
 
 	return serv

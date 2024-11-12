@@ -1,4 +1,4 @@
-package requests
+package request
 
 type ConversionRequest struct {
 	Path           string   `json:"path" validate:"required"`

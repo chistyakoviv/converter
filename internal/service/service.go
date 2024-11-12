@@ -7,6 +7,6 @@ import (
 )
 
 type ConversionService interface {
-	Convert(ctx context.Context, info *model.ConversionInfo) (int64, error)
+	Add(ctx context.Context, info *model.ConversionInfo) (int64, error)
 	Delete(ctx context.Context, fullpath string) error
 }

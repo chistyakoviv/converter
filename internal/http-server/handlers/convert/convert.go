@@ -9,7 +9,8 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/constants"
 	"github.com/chistyakoviv/converter/internal/http-server/converter"
-	"github.com/chistyakoviv/converter/internal/http-server/requests"
+	"github.com/chistyakoviv/converter/internal/http-server/request"
+	"github.com/chistyakoviv/converter/internal/http-server/response"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/repository/conversion"
@@ -18,11 +19,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 )
-
-type Response struct {
-	resp.Response
-	Id int64 `json:"id"`
-}
 
 func New(
 	ctx context.Context,
@@ -38,7 +34,7 @@ func New(
 			slog.String(constants.RequestID, middleware.GetReqID(r.Context())),
 		)
 
-		var req requests.ConversionRequest
+		var req request.ConversionRequest
 
 		err := render.DecodeJSON(r.Body, &req)
 		if errors.Is(err, io.EOF) {
@@ -71,7 +67,7 @@ func New(
 			return
 		}
 
-		id, err := conversionService.Convert(ctx, converter.ToConversionInfoFromRequest(req))
+		id, err := conversionService.Add(ctx, converter.ToConversionInfoFromRequest(req))
 		if errors.Is(err, conversion.ErrPathAlreadyExist) {
 			logger.Debug("path already exists", slog.String("path", req.Path))
 
@@ -89,7 +85,7 @@ func New(
 
 		logger.Debug("file added", slog.Int64("id", id))
 
-		render.JSON(w, r, Response{
+		render.JSON(w, r, response.ConversionResponse{
 			Response: resp.OK(),
 			Id:       id,
 		})

@@ -4,11 +4,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chistyakoviv/converter/internal/http-server/requests"
+	"github.com/chistyakoviv/converter/internal/http-server/request"
 	"github.com/chistyakoviv/converter/internal/model"
 )
 
-func ToConversionInfoFromRequest(dto requests.ConversionRequest) *model.ConversionInfo {
+func ToConversionInfoFromRequest(dto request.ConversionRequest) *model.ConversionInfo {
 	// Extract the file name with extension
 	fileName := filepath.Base(dto.Path)
 
