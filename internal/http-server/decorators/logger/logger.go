@@ -15,8 +15,11 @@ func LoggerDecorator(op string) pipe.HandlerFn[deps.ConversionDeps, http.Handler
 		d *deps.ConversionDeps,
 		handler http.HandlerFunc,
 	) http.HandlerFunc {
+		// Remember the orig ref to avoid repeating logger attributes
+		logger := d.Logger
+
 		return func(w http.ResponseWriter, r *http.Request) {
-			d.Logger = d.Logger.With(
+			d.Logger = logger.With(
 				slog.String("op", op),
 				slog.String(constants.RequestID, middleware.GetReqID(r.Context())),
 			)
