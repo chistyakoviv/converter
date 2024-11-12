@@ -5,14 +5,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/chistyakoviv/converter/internal/constants"
 	"github.com/chistyakoviv/converter/internal/http-server/converter"
 	"github.com/chistyakoviv/converter/internal/http-server/deps"
 	"github.com/chistyakoviv/converter/internal/http-server/response"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/repository/conversion"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 )
 
@@ -21,13 +19,6 @@ func New(
 	hander http.HandlerFunc,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.conversion.New"
-
-		d.Logger = d.Logger.With(
-			slog.String("op", op),
-			slog.String(constants.RequestID, middleware.GetReqID(r.Context())),
-		)
-
 		id, err := d.ConversionService.Add(d.Ctx, converter.ToConversionInfoFromRequest(d.Request))
 		if errors.Is(err, conversion.ErrPathAlreadyExist) {
 			d.Logger.Debug("path already exists", slog.String("path", d.Request.Path))
