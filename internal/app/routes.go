@@ -19,7 +19,7 @@ func initRoutes(ctx context.Context, c di.Container) {
 		w.Write([]byte("alive"))
 	})
 
-	h := pipe.New(&deps.ConversionDeps{
+	h := pipe.New[deps.ConversionDeps, http.HandlerFunc](&deps.ConversionDeps{
 		Ctx:               ctx,
 		Logger:            resolveLogger(c),
 		Validator:         resolveValidator(c),

@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func LoggerDecorator(op string) pipe.HandlerFn[deps.ConversionDeps] {
+func LoggerDecorator(op string) pipe.HandlerFn[deps.ConversionDeps, http.HandlerFunc] {
 	return func(
 		d *deps.ConversionDeps,
 		handler http.HandlerFunc,

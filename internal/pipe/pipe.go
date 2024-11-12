@@ -1,32 +1,30 @@
 package pipe
 
-import "net/http"
+type HandlerFn[T any, P any] func(deps *T, fn P) P
 
-type HandlerFn[T any] func(deps *T, fn http.HandlerFunc) http.HandlerFunc
-
-type Pipe[T any] interface {
-	Pipe(n HandlerFn[T]) Pipe[T]
-	Build() http.HandlerFunc
+type Pipe[T any, P any] interface {
+	Pipe(fn HandlerFn[T, P]) Pipe[T, P]
+	Build() P
 }
 
-type pipe[T any] struct {
+type pipe[T any, P any] struct {
 	deps  *T
-	funcs []HandlerFn[T]
+	funcs []HandlerFn[T, P]
 }
 
-func New[T any](deps *T) Pipe[T] {
-	return &pipe[T]{
+func New[T any, P any](deps *T) Pipe[T, P] {
+	return &pipe[T, P]{
 		deps: deps,
 	}
 }
 
-func (p *pipe[T]) Pipe(fn HandlerFn[T]) Pipe[T] {
+func (p *pipe[T, P]) Pipe(fn HandlerFn[T, P]) Pipe[T, P] {
 	p.funcs = append(p.funcs, fn)
 	return p
 }
 
-func (p *pipe[T]) Build() http.HandlerFunc {
-	var next http.HandlerFunc
+func (p *pipe[T, P]) Build() P {
+	var next P
 	for i := len(p.funcs) - 1; i > 0; i-- {
 		next = p.funcs[i](p.deps, next)
 	}
