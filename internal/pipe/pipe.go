@@ -25,7 +25,7 @@ func (p *pipe[T, P]) Pipe(fn HandlerFn[T, P]) Pipe[T, P] {
 
 func (p *pipe[T, P]) Build() P {
 	var next P
-	for i := len(p.funcs) - 1; i > 0; i-- {
+	for i := len(p.funcs) - 1; i >= 0; i-- {
 		next = p.funcs[i](p.deps, next)
 	}
 	return next
