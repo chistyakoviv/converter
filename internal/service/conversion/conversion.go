@@ -24,7 +24,7 @@ func NewService(
 
 func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, error) {
 	if !conversion.IsSupported(info.Ext) {
-		return -1, fmt.Errorf("file type \"%s\" not supported", info.Ext)
+		return -1, fmt.Errorf("file type '%s' not supported", info.Ext)
 	}
 	if info.ConvertTo == nil {
 		defaultFormat, err := conversion.Default(info.Ext)
@@ -35,7 +35,7 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	} else {
 		for _, ext := range info.ConvertTo {
 			if !conversion.IsConvertable(info.Ext, ext) {
-				return -1, fmt.Errorf("file type \"%s\" is not convertable to \"%s\"", info.Ext, ext)
+				return -1, fmt.Errorf("file type '%s' is not convertable to '%s'", info.Ext, ext)
 			}
 		}
 	}
