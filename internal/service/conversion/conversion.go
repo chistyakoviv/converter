@@ -3,8 +3,8 @@ package conversion
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/chistyakoviv/converter/internal/lib/conversion"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/service"
@@ -23,22 +23,29 @@ func NewService(
 }
 
 func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, error) {
-	if !conversion.IsSupported(info.Ext) {
+	if !isSupported(info.Ext) {
 		return -1, fmt.Errorf("file type '%s' not supported", info.Ext)
 	}
+
+	// Assign default format if no target formats are specified
 	if info.ConvertTo == nil {
-		defaultFormat, err := conversion.Default(info.Ext)
+		defaultFormat, err := defaultFormatFor(info.Ext)
 		if err != nil {
 			return -1, fmt.Errorf("failed to get default format: %w", err)
 		}
 		info.ConvertTo = []string{defaultFormat}
 	} else {
+		var unsupportedFormats []string
 		for _, ext := range info.ConvertTo {
-			if !conversion.IsConvertable(info.Ext, ext) {
-				return -1, fmt.Errorf("file type '%s' is not convertable to '%s'", info.Ext, ext)
+			if !isConvertible(info.Ext, ext) {
+				unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", ext))
 			}
 		}
+		if len(unsupportedFormats) > 0 {
+			return -1, fmt.Errorf("file type '%s' is not convertible to %s", info.Ext, strings.Join(unsupportedFormats, ", "))
+		}
 	}
+
 	return s.conversionRepository.Create(ctx, info)
 }
 
