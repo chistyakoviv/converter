@@ -41,9 +41,9 @@ func New(
 
 		id, err := conversionService.Add(ctx, converter.ToConversionInfoFromRequest(req))
 		if errors.Is(err, conversion.ErrPathAlreadyExist) {
-			decoratedLogger.Debug("path already exists", slog.String("path", req.Path))
+			decoratedLogger.Debug("file with the specified path already exists", slog.String("path", req.Path))
 
-			render.JSON(w, r, resp.Error("path already exists"))
+			render.JSON(w, r, resp.Error("file with the specified path already exists"))
 
 			return
 		}
