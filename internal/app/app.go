@@ -80,9 +80,6 @@ func (a *app) Run(ctx context.Context) {
 	dq.Wait()
 
 	cancel()
-	// if wg != nil {
-	// 	wg.Wait()
-	// }
 }
 
 func waitSignal() chan os.Signal {
