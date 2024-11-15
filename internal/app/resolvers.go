@@ -99,6 +99,16 @@ func resolveValidator(c di.Container) *validator.Validate {
 	return validator
 }
 
+func resolveTxManager(c di.Container) db.TxManager {
+	txManager, err := di.Resolve[db.TxManager](c, "txManager")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve tx manager definition: %v", err)
+	}
+
+	return txManager
+}
+
 // Repositories
 func resolveConversionQueueRepository(c di.Container) repository.ConversionQueueRepository {
 	repo, err := di.Resolve[repository.ConversionQueueRepository](c, "conversionQueueRepository")

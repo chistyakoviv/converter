@@ -10,6 +10,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
+	"github.com/chistyakoviv/converter/internal/db/transaction"
 	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
 	mwLogger "github.com/chistyakoviv/converter/internal/http-server/middleware/logger"
@@ -114,6 +115,10 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return validator.New()
 	})
 
+	c.RegisterSingleton("txManager", func(c di.Container) db.TxManager {
+		return transaction.NewTransactionManager(resolveDbClient(c).DB())
+	})
+
 	// Repositories
 	c.RegisterSingleton("conversionQueueRepository", func(c di.Container) repository.ConversionQueueRepository {
 		return conversionRepository.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
@@ -121,6 +126,6 @@ func bootstrap(ctx context.Context, c di.Container) {
 
 	// Services
 	c.RegisterSingleton("conversionService", func(c di.Container) service.ConversionService {
-		return conversionService.NewService(resolveConversionQueueRepository(c))
+		return conversionService.NewService(resolveTxManager(c), resolveConversionQueueRepository(c))
 	})
 }

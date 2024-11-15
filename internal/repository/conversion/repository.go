@@ -42,7 +42,6 @@ func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.Conversi
 }
 
 func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, error) {
-	// TODO: use transaction to check fullpath existance
 	builder := r.sq.Insert(tablename).
 		Columns(
 			fullpathColumn,
@@ -74,7 +73,6 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 
 	var id int64
 	err = r.db.DB().QueryRow(ctx, query, args...).Scan(&id)
-	// TODO: intercept fullpath already exists error
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", query.Name, err)
 	}
