@@ -9,7 +9,6 @@ import (
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
-	"github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/chistyakoviv/converter/internal/service"
 )
 
@@ -62,7 +61,7 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		var errTx error
 		_, errTx = s.conversionRepository.GetByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
-			return conversion.ErrPathAlreadyExist
+			return ErrPathAlreadyExist
 		}
 		id, errTx = s.conversionRepository.Create(ctx, info)
 

@@ -12,8 +12,8 @@ import (
 	"github.com/chistyakoviv/converter/internal/http-server/request"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
-	"github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/chistyakoviv/converter/internal/service"
+	"github.com/chistyakoviv/converter/internal/service/conversion"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 )
