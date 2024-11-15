@@ -61,7 +61,10 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		var errTx error
 		_, errTx = s.conversionRepository.GetByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
-			return ErrPathAlreadyExist
+			if errTx == nil {
+				return ErrPathAlreadyExist
+			}
+			return errTx
 		}
 		id, errTx = s.conversionRepository.Create(ctx, info)
 

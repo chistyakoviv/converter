@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type Conversion struct {
 	ReplaceOrigExt bool
 	ErrorCode      int
 	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	UpdatedAt      sql.NullTime
 }
 
 type ConversionInfo struct {
