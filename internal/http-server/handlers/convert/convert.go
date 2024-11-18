@@ -13,7 +13,7 @@ import (
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/service"
-	"github.com/chistyakoviv/converter/internal/service/conversion"
+	"github.com/chistyakoviv/converter/internal/service/conversionq"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 )
@@ -27,7 +27,7 @@ func New(
 	ctx context.Context,
 	logger *slog.Logger,
 	validation *validator.Validate,
-	conversionService service.ConversionService,
+	conversionService service.ConversionQueueService,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoratedLogger := loggerDecorator.LoggerDecorator("handlers.conversion.New", logger, r)
@@ -40,7 +40,7 @@ func New(
 		}
 
 		id, err := conversionService.Add(ctx, converter.ToConversionInfoFromRequest(req))
-		if errors.Is(err, conversion.ErrPathAlreadyExist) {
+		if errors.Is(err, conversionq.ErrPathAlreadyExist) {
 			decoratedLogger.Debug("file with the specified path already exists", slog.String("path", req.Path))
 
 			render.JSON(w, r, resp.Error("file with the specified path already exists"))

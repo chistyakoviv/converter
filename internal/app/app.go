@@ -86,10 +86,14 @@ func (a *app) Run(ctx context.Context) {
 		logger.Info("task processing started")
 
 		for range taskService.Tasks() {
-			logger.Debug("Check for a new conversion task")
+			// logger.Debug("Check for a new conversion task")
 			time.Sleep(time.Duration(rand.Intn(10)) * time.Second) // Simulate a long running task
-			logger.Debug("A task is finished")
+			// logger.Debug("A task is finished")
 		}
+	}()
+
+	go func() {
+		logger.Debug("Test file conversion using govips")
 	}()
 
 	// Graceful Shutdown

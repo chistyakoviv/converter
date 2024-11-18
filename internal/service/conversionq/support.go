@@ -1,4 +1,4 @@
-package conversion
+package conversionq
 
 type FormatInfo struct {
 	DefaultFormat    string

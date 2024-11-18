@@ -4,7 +4,24 @@ FROM golang:1.23.2-alpine3.20
 ENV CGO_ENABLED=1
 
 # build-base allows to run programs with -race flag
-RUN apk add --update --no-cache build-base entr git openssl
+# aom-dev library (for AV1 support)
+# libheif library (for HEIF/AVIF decoding)
+RUN apk add --update --no-cache build-base entr git openssl \
+    vips \
+    vips-dev \
+    gcc \
+    g++ \
+    libc-dev \
+    make \
+    pkgconfig \
+    glib-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    libexif-dev \
+    tiff-dev \
+    libheif-dev \
+    aom-dev
 
 # Change working directory after installing dependencies
 # (in case some deps are needed to be dowlaoded, unpacked and copied to the right place)

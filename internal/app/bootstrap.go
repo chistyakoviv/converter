@@ -8,6 +8,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/converter"
+	"github.com/chistyakoviv/converter/internal/converter/govips"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/db/transaction"
@@ -18,7 +20,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/repository"
 	conversionRepository "github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/chistyakoviv/converter/internal/service"
-	conversionService "github.com/chistyakoviv/converter/internal/service/conversion"
+	conversionQueueService "github.com/chistyakoviv/converter/internal/service/conversionq"
 	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -120,14 +122,18 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return transaction.NewTransactionManager(resolveDbClient(c).DB())
 	})
 
+	c.RegisterSingleton("imageConverter", func(c di.Container) converter.ImageConverter {
+		return govips.NewImageConverter(resolveLogger(c), resolveConfig(c))
+	})
+
 	// Repositories
 	c.RegisterSingleton("conversionQueueRepository", func(c di.Container) repository.ConversionQueueRepository {
 		return conversionRepository.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
 	})
 
 	// Services
-	c.RegisterSingleton("conversionService", func(c di.Container) service.ConversionService {
-		return conversionService.NewService(resolveTxManager(c), resolveConversionQueueRepository(c))
+	c.RegisterSingleton("conversionQueueService", func(c di.Container) service.ConversionQueueService {
+		return conversionQueueService.NewService(resolveTxManager(c), resolveConversionQueueRepository(c))
 	})
 
 	c.RegisterSingleton("taskService", func(c di.Container) service.TaskService {

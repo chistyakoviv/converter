@@ -7,6 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
@@ -109,6 +110,16 @@ func resolveTxManager(c di.Container) db.TxManager {
 	return txManager
 }
 
+func resolveImageConverter(c di.Container) converter.ImageConverter {
+	ic, err := di.Resolve[converter.ImageConverter](c, "imageConverter")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve image converter definition: %v", err)
+	}
+
+	return ic
+}
+
 // Repositories
 func resolveConversionQueueRepository(c di.Container) repository.ConversionQueueRepository {
 	repo, err := di.Resolve[repository.ConversionQueueRepository](c, "conversionQueueRepository")
@@ -121,8 +132,8 @@ func resolveConversionQueueRepository(c di.Container) repository.ConversionQueue
 }
 
 // Services
-func resolveConversionService(c di.Container) service.ConversionService {
-	serv, err := di.Resolve[service.ConversionService](c, "conversionService")
+func resolveConversionQueueService(c di.Container) service.ConversionQueueService {
+	serv, err := di.Resolve[service.ConversionQueueService](c, "conversionQueueService")
 
 	if err != nil {
 		log.Fatalf("Couldn't resolve conversion service definition: %v", err)

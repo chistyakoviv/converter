@@ -19,6 +19,6 @@ func initRoutes(ctx context.Context, c di.Container) {
 		ctx,
 		resolveLogger(c),
 		resolveValidator(c),
-		resolveConversionService(c),
+		resolveConversionQueueService(c),
 	))
 }

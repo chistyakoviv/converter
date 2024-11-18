@@ -6,7 +6,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/model"
 )
 
-type ConversionService interface {
+type ConversionQueueService interface {
 	Add(ctx context.Context, info *model.ConversionInfo) (int64, error)
 	Delete(ctx context.Context, fullpath string) error
 }

@@ -1,4 +1,4 @@
-package conversion
+package conversionq
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type serv struct {
 func NewService(
 	txManager db.TxManager,
 	conversionRepository repository.ConversionQueueRepository,
-) service.ConversionService {
+) service.ConversionQueueService {
 	return &serv{
 		txManager:            txManager,
 		conversionRepository: conversionRepository,
