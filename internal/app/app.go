@@ -83,6 +83,8 @@ func (a *app) Run(ctx context.Context) {
 
 	// Task processing
 	go func() {
+		logger.Info("task processing started")
+
 		for range taskService.Tasks() {
 			logger.Debug("Check for a new conversion task")
 			time.Sleep(time.Duration(rand.Intn(10)) * time.Second) // Simulate a long running task
