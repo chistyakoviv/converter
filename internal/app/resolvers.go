@@ -130,3 +130,13 @@ func resolveConversionService(c di.Container) service.ConversionService {
 
 	return serv
 }
+
+func resolveTaskService(c di.Container) service.TaskService {
+	taskService, err := di.Resolve[service.TaskService](c, "taskService")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve task service definition: %v", err)
+	}
+
+	return taskService
+}

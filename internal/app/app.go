@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
@@ -45,11 +47,13 @@ func (a *app) Run(ctx context.Context) {
 	cfg := resolveConfig(a.container)
 	logger := resolveLogger(a.container)
 	dq := resolveDeferredQ(a.container)
+	taskService := resolveTaskService(a.container)
 
 	logger.Debug("Application is running in DEBUG mode")
 
 	initRoutes(ctx, a.container)
 
+	// http server
 	go func() {
 		logger.Info("starting http server", slog.String("address", cfg.HTTPServer.Address), slog.String("env", cfg.Env))
 
@@ -64,6 +68,26 @@ func (a *app) Run(ctx context.Context) {
 			logger.Error("http server error", slogger.Err(err))
 		}
 		logger.Info("http server stopped")
+	}()
+
+	// Periodic task scheduling
+	go func() {
+		logger.Info("periodic task scheduling started", slog.String("timeout", cfg.Task.CheckTimeout.String()))
+
+		ticker := time.NewTicker(cfg.Task.CheckTimeout)
+		defer ticker.Stop()
+		for range ticker.C {
+			taskService.TrySchedule()
+		}
+	}()
+
+	// Task processing
+	go func() {
+		for range taskService.Tasks() {
+			logger.Debug("Check for a new conversion task")
+			time.Sleep(time.Duration(rand.Intn(10)) * time.Second) // Simulate a long running task
+			logger.Debug("A task is finished")
+		}
 	}()
 
 	// Graceful Shutdown

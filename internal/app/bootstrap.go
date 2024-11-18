@@ -19,6 +19,7 @@ import (
 	conversionRepository "github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/chistyakoviv/converter/internal/service"
 	conversionService "github.com/chistyakoviv/converter/internal/service/conversion"
+	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
@@ -127,5 +128,9 @@ func bootstrap(ctx context.Context, c di.Container) {
 	// Services
 	c.RegisterSingleton("conversionService", func(c di.Container) service.ConversionService {
 		return conversionService.NewService(resolveTxManager(c), resolveConversionQueueRepository(c))
+	})
+
+	c.RegisterSingleton("taskService", func(c di.Container) service.TaskService {
+		return task.NewService()
 	})
 }

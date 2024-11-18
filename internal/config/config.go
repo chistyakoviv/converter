@@ -12,6 +12,7 @@ type Config struct {
 	Env        string     `yaml:"env" env:"ENV" env-required:"true"`
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Postgres   Postgres   `yaml:"database"`
+	Task       Task       `yaml:"task"`
 }
 
 type Postgres struct {
@@ -28,6 +29,10 @@ type HTTPServer struct {
 	ReadTimeout  time.Duration `yaml:"read_timeout" env:"READ_TIMEOUT" env-required:"true"`
 	WriteTimeout time.Duration `yaml:"write_timeout" env:"WRITE_TIMEOUT" env-required:"true"`
 	IdleTimeout  time.Duration `yaml:"idle_timeout" env:"IDLE_TIMEOUT" env-required:"true"`
+}
+
+type Task struct {
+	CheckTimeout time.Duration `yaml:"check_timeout" env:"TASK_CHECK_TIMEOUT" env-default:"5m0s"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown

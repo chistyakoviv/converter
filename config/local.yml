@@ -11,3 +11,5 @@ http_server:
   read_timeout: 4s
   write_timeout: 4s
   idle_timeout: 60s
+task:
+  check_timeout: 5s
