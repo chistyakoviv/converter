@@ -117,3 +117,91 @@ func (r *repo) GetByFullpath(ctx context.Context, fullpath string) (*model.Conve
 
 	return &file, nil
 }
+
+func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) {
+	builder := r.sq.
+		Select("*").
+		From(tablename).
+		OrderBy(fmt.Sprintf("%s DESC", createdAtColumn)).
+		Where(
+			sq.And{
+				sq.Eq{isDoneColumn: false},
+				sq.Eq{isCanceledColumn: false},
+			},
+		).
+		Limit(1)
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Query{
+		Name:     "repository.conversion_queue.FindOldestQueued",
+		QueryRaw: sql,
+	}
+
+	var file model.Conversion
+	err = r.db.DB().QueryRow(ctx, query, args...).Scan(
+		&file.Id,
+		&file.Fullpath,
+		&file.Path,
+		&file.Filestem,
+		&file.Ext,
+		&file.ConvertTo,
+		&file.IsDone,
+		&file.IsCanceled,
+		&file.ReplaceOrigExt,
+		&file.ErrorCode,
+		&file.CreatedAt,
+		&file.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("%s: %w", query.Name, db.ErrNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", query.Name, err)
+	}
+
+	return &file, nil
+}
+
+func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
+	builder := r.sq.Update(tablename).Set(isDoneColumn, true).Where(sq.Eq{fullpathColumn: fullpath})
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return err
+	}
+
+	query := db.Query{
+		Name:     "repository.conversion_queue.MarkAsCompleted",
+		QueryRaw: sql,
+	}
+
+	_, err = r.db.DB().Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("%s: %w", query.Name, err)
+	}
+	return err
+}
+
+func (r *repo) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {
+	builder := r.sq.Update(tablename).Set(isCanceledColumn, true).Set(errorCodeColumn, code).Where(sq.Eq{fullpathColumn: fullpath})
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return err
+	}
+
+	query := db.Query{
+		Name:     "repository.conversion_queue.MarkAsCanceled",
+		QueryRaw: sql,
+	}
+
+	_, err = r.db.DB().Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("%s: %w", query.Name, err)
+	}
+	return err
+}

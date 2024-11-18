@@ -78,6 +78,18 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	return id, nil
 }
 
+func (s *serv) Pop(ctx context.Context) (*model.Conversion, error) {
+	return s.conversionRepository.FindOldestQueued(ctx)
+}
+
+func (s *serv) MarkAsCompleted(ctx context.Context, fullpath string) error {
+	return s.conversionRepository.MarkAsCompleted(ctx, fullpath)
+}
+
+func (s *serv) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {
+	return s.conversionRepository.MarkAsCanceled(ctx, fullpath, code)
+}
+
 func (s *serv) Delete(ctx context.Context, fullpath string) error {
 	return nil
 }

@@ -21,6 +21,7 @@ import (
 	conversionRepository "github.com/chistyakoviv/converter/internal/repository/conversion"
 	"github.com/chistyakoviv/converter/internal/service"
 	conversionQueueService "github.com/chistyakoviv/converter/internal/service/conversionq"
+	converterService "github.com/chistyakoviv/converter/internal/service/converter"
 	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -123,7 +124,17 @@ func bootstrap(ctx context.Context, c di.Container) {
 	})
 
 	c.RegisterSingleton("imageConverter", func(c di.Container) converter.ImageConverter {
-		return govips.NewImageConverter(resolveLogger(c), resolveConfig(c))
+		serv := govips.NewImageConverter(resolveLogger(c), resolveConfig(c))
+		dq := resolveDeferredQ(c)
+		logger := resolveLogger(c)
+
+		dq.Add(func() error {
+			defer logger.Info("image converter shutdown")
+			serv.Shutdown()
+			return nil
+		})
+
+		return serv
 	})
 
 	// Repositories
@@ -138,5 +149,9 @@ func bootstrap(ctx context.Context, c di.Container) {
 
 	c.RegisterSingleton("taskService", func(c di.Container) service.TaskService {
 		return task.NewService()
+	})
+
+	c.RegisterSingleton("converterService", func(c di.Container) service.ConverterService {
+		return converterService.NewService(resolveConfig(c), resolveLogger(c), resolveImageConverter(c))
 	})
 }

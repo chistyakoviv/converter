@@ -143,11 +143,21 @@ func resolveConversionQueueService(c di.Container) service.ConversionQueueServic
 }
 
 func resolveTaskService(c di.Container) service.TaskService {
-	taskService, err := di.Resolve[service.TaskService](c, "taskService")
+	serv, err := di.Resolve[service.TaskService](c, "taskService")
 
 	if err != nil {
 		log.Fatalf("Couldn't resolve task service definition: %v", err)
 	}
 
-	return taskService
+	return serv
+}
+
+func resolveConverterService(c di.Container) service.ConverterService {
+	serv, err := di.Resolve[service.ConverterService](c, "converterService")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve converter service definition: %v", err)
+	}
+
+	return serv
 }

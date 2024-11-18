@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
+	"github.com/chistyakoviv/converter/internal/service/converter"
 )
 
 type Application interface {
@@ -48,6 +49,8 @@ func (a *app) Run(ctx context.Context) {
 	logger := resolveLogger(a.container)
 	dq := resolveDeferredQ(a.container)
 	taskService := resolveTaskService(a.container)
+	conversionQueueService := resolveConversionQueueService(a.container)
+	converterService := resolveConverterService(a.container)
 
 	logger.Debug("Application is running in DEBUG mode")
 
@@ -86,14 +89,36 @@ func (a *app) Run(ctx context.Context) {
 		logger.Info("task processing started")
 
 		for range taskService.Tasks() {
-			// logger.Debug("Check for a new conversion task")
-			time.Sleep(time.Duration(rand.Intn(10)) * time.Second) // Simulate a long running task
-			// logger.Debug("A task is finished")
-		}
-	}()
+			logger.Debug("Check for a new conversion task")
 
-	go func() {
-		logger.Debug("Test file conversion using govips")
+			// TODO: move to the processing service
+			for {
+				fileInfo, err := conversionQueueService.Pop(ctx)
+				if errors.Is(err, db.ErrNotFound) {
+					break
+				}
+
+				if err != nil {
+					logger.Error("failed to get conversion task", slogger.Err(err))
+					break
+				}
+
+				err = converterService.Convert(ctx, fileInfo)
+				if err != nil {
+					logger.Error("failed to convert file", slogger.Err(err))
+					conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, converter.GetConversionError(err).Code())
+					continue
+				}
+
+				err = conversionQueueService.MarkAsCompleted(ctx, fileInfo.Fullpath)
+				if err != nil {
+					logger.Error("failed to mark as completed", slogger.Err(err))
+					break
+				}
+			}
+
+			logger.Debug("A task is finished")
+		}
 	}()
 
 	// Graceful Shutdown
