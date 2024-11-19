@@ -28,6 +28,7 @@ func New(
 	logger *slog.Logger,
 	validation *validator.Validate,
 	conversionService service.ConversionQueueService,
+	taskService service.TaskService,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoratedLogger := loggerDecorator.LoggerDecorator("handlers.conversion.New", logger, r)
@@ -56,6 +57,9 @@ func New(
 		}
 
 		decoratedLogger.Debug("file added", slog.Int64("id", id))
+
+		// Try to process the file immediately
+		taskService.TrySchedule()
 
 		render.JSON(w, r, ConversionResponse{
 			Response: resp.OK(),
