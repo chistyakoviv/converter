@@ -110,6 +110,7 @@ func resolveTxManager(c di.Container) db.TxManager {
 	return txManager
 }
 
+// Converters
 func resolveImageConverter(c di.Container) converter.ImageConverter {
 	ic, err := di.Resolve[converter.ImageConverter](c, "imageConverter")
 
@@ -118,6 +119,16 @@ func resolveImageConverter(c di.Container) converter.ImageConverter {
 	}
 
 	return ic
+}
+
+func resolveVideoConverter(c di.Container) converter.VideoConverter {
+	vc, err := di.Resolve[converter.VideoConverter](c, "videoConverter")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve video converter definition: %v", err)
+	}
+
+	return vc
 }
 
 // Repositories

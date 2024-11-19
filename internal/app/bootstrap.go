@@ -10,6 +10,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
+	"github.com/chistyakoviv/converter/internal/converter/ffmpeggo"
 	"github.com/chistyakoviv/converter/internal/converter/govips"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
@@ -138,6 +139,20 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return serv
 	})
 
+	c.RegisterSingleton("videoConverter", func(c di.Container) converter.VideoConverter {
+		serv := ffmpeggo.NewVideoConverter(resolveConfig(c), resolveLogger(c))
+		dq := resolveDeferredQ(c)
+		logger := resolveLogger(c)
+
+		dq.Add(func() error {
+			defer logger.Info("video converter shutdown")
+			serv.Shutdown()
+			return nil
+		})
+
+		return serv
+	})
+
 	// Repositories
 	c.RegisterSingleton("conversionQueueRepository", func(c di.Container) repository.ConversionQueueRepository {
 		return conversionRepository.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
@@ -161,7 +176,11 @@ func bootstrap(ctx context.Context, c di.Container) {
 	})
 
 	c.RegisterSingleton("converterService", func(c di.Container) service.ConverterService {
-		serv, err := converterService.NewService(resolveConfig(c), resolveLogger(c), resolveImageConverter(c))
+		serv, err := converterService.NewService(resolveConfig(c),
+			resolveLogger(c),
+			resolveImageConverter(c),
+			resolveVideoConverter(c),
+		)
 
 		if err != nil {
 			log.Fatalf("Couldn't create converter service: %v", err)

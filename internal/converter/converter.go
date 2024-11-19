@@ -5,6 +5,11 @@ type ImageConverter interface {
 	ToWebp(from string, to string, conf ConversionConfig) error
 }
 
+type VideoConverter interface {
+	Shutdowner
+	ToWebm(from string, to string, conf ConversionConfig) error
+}
+
 type Shutdowner interface {
 	Shutdown()
 }

@@ -17,11 +17,17 @@ type serv struct {
 	cfg                 *config.Config
 	logger              *slog.Logger
 	imageConverter      converter.ImageConverter
+	videoConverter      converter.VideoConverter
 	defaultImageFormats converter.ConversionFormats
 	defaultVideoFormats converter.ConversionFormats
 }
 
-func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converter.ImageConverter) (service.ConverterService, error) {
+func NewService(
+	cfg *config.Config,
+	logger *slog.Logger,
+	imageConverter converter.ImageConverter,
+	videoConverter converter.VideoConverter,
+) (service.ConverterService, error) {
 	defaultImageFormats, err := converter.ParseFormats(cfg.Image.DefaultFormats)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse default image formats: %w", err)
@@ -35,6 +41,7 @@ func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converte
 		cfg:                 cfg,
 		logger:              logger,
 		imageConverter:      imageConverter,
+		videoConverter:      videoConverter,
 		defaultImageFormats: defaultImageFormats,
 		defaultVideoFormats: defaultVideoFormats,
 	}, nil
@@ -65,6 +72,11 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		case "webp":
 			mergedConf := converter.MergeConfigs(s.defaultImageFormats[ext], conf)
 			if err := s.imageConverter.ToWebp(src, dest, mergedConf); err != nil {
+				return NewConversionError(err.Error(), ErrConversion)
+			}
+		case "mp4":
+			mergedConf := converter.MergeConfigs(s.defaultVideoFormats[ext], conf)
+			if err := s.videoConverter.ToWebm(src, dest, mergedConf); err != nil {
 				return NewConversionError(err.Error(), ErrConversion)
 			}
 		default:

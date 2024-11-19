@@ -45,6 +45,7 @@ type Image struct {
 type Video struct {
 	DefaultFormats string `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
 	ReplaceOrigExt bool   `yaml:"replace_orig_ext" env:"VIDEO_REPLACE_ORIG_EXT" env-default:"false"`
+	Threads        int    `yaml:"threads" env:"VIDEO_THREADS" env-default:"4"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
