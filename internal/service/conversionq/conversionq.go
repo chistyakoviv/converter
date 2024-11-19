@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
@@ -13,17 +15,24 @@ import (
 )
 
 type serv struct {
+	cfg                  *config.Config
 	txManager            db.TxManager
 	conversionRepository repository.ConversionQueueRepository
+	imageDefaultFormats  []string
+	videoDefaultFormats  []string
 }
 
 func NewService(
+	cfg *config.Config,
 	txManager db.TxManager,
 	conversionRepository repository.ConversionQueueRepository,
 ) service.ConversionQueueService {
 	return &serv{
+		cfg:                  cfg,
 		txManager:            txManager,
 		conversionRepository: conversionRepository,
+		imageDefaultFormats:  converter.Formats(cfg.Image.DefaultFormats),
+		videoDefaultFormats:  converter.Formats(cfg.Video.DefaultFormats),
 	}
 }
 
@@ -34,17 +43,20 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 
 	// Assign default format if no target formats are specified
 	if info.ConvertTo == nil {
-		defaultFormat, err := defaultFormatFor(info.Ext)
-		if err != nil {
-			return -1, fmt.Errorf("failed to get default format: %w", err)
-		}
-		info.ConvertTo = []string{defaultFormat}
+		info.ConvertTo = s.imageDefaultFormats
 	} else {
 		var unsupportedFormats []string
-		for _, ext := range info.ConvertTo {
-			if !isConvertible(info.Ext, ext) {
+		var invalidConversionFormat []string
+		for _, entry := range info.ConvertTo {
+			ext, _, err := converter.ParseFormat(entry)
+			if err != nil {
+				invalidConversionFormat = append(invalidConversionFormat, entry)
+			} else if !isConvertible(info.Ext, ext) {
 				unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", ext))
 			}
+		}
+		if len(invalidConversionFormat) > 0 {
+			return -1, fmt.Errorf("invalid conversion format: %s", strings.Join(invalidConversionFormat, ", "))
 		}
 		if len(unsupportedFormats) > 0 {
 			return -1, fmt.Errorf("file type '%s' is not convertible to %s", info.Ext, strings.Join(unsupportedFormats, ", "))

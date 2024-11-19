@@ -145,7 +145,11 @@ func bootstrap(ctx context.Context, c di.Container) {
 
 	// Services
 	c.RegisterSingleton("conversionQueueService", func(c di.Container) service.ConversionQueueService {
-		return conversionQueueService.NewService(resolveTxManager(c), resolveConversionQueueRepository(c))
+		return conversionQueueService.NewService(
+			resolveConfig(c),
+			resolveTxManager(c),
+			resolveConversionQueueRepository(c),
+		)
 	})
 
 	c.RegisterSingleton("taskService", func(c di.Container) service.TaskService {

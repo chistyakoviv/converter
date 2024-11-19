@@ -17,5 +17,5 @@ image:
   default_formats: "webp"
   # default_formats: "webp?quality=80,avif?quality=80"
 video:
-  default_formats: "webm?video_codec=vp9&audio_codec=opus"
+  default_formats: "webm?c:v=libvpx-vp9&c:a=libopus&b:v=1M&b:a=128k"
   # default_formats: "webm?video_codec=vp9&audio_codec=opus,mp4?video_codec=h264&audio_codec=aac"

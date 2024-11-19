@@ -9,8 +9,12 @@ type ConversionConfig map[string]string
 
 type ConversionFormats map[string]ConversionConfig
 
+func Formats(str string) []string {
+	return strings.Split(str, ",")
+}
+
 func ParseFormats(formatsStr string) (ConversionFormats, error) {
-	entries := strings.Split(formatsStr, ",")
+	entries := Formats(formatsStr)
 	if len(entries) == 0 {
 		return nil, fmt.Errorf("no conversion formats specified")
 	}
