@@ -10,6 +10,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/lib/file"
 	"github.com/chistyakoviv/converter/internal/model"
+	"github.com/chistyakoviv/converter/internal/service"
 )
 
 type serv struct {
@@ -18,7 +19,7 @@ type serv struct {
 	imageConverter converter.ImageConverter
 }
 
-func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converter.ImageConverter) *serv {
+func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converter.ImageConverter) service.ConverterService {
 	return &serv{
 		cfg:            cfg,
 		logger:         logger,
