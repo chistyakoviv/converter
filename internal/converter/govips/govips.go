@@ -18,22 +18,29 @@ type conv struct {
 func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageConverter {
 	vipsLogger := func(messageDomain string, verbosity vips.LogLevel, message string) {
 		var messageLevelDescription string
+		var loggerFn func(msg string, args ...any)
 		switch verbosity {
 		case vips.LogLevelError:
 			messageLevelDescription = "error"
+			loggerFn = logger.Error
 		case vips.LogLevelCritical:
 			messageLevelDescription = "critical"
+			loggerFn = logger.Error
 		case vips.LogLevelWarning:
 			messageLevelDescription = "warning"
+			loggerFn = logger.Warn
 		case vips.LogLevelMessage:
 			messageLevelDescription = "message"
+			loggerFn = logger.Info
 		case vips.LogLevelInfo:
 			messageLevelDescription = "info"
+			loggerFn = logger.Info
 		case vips.LogLevelDebug:
 			messageLevelDescription = "debug"
+			loggerFn = logger.Debug
 		}
 
-		logger.Debug("govips",
+		loggerFn("govips",
 			slog.Attr{
 				Key:   "domain",
 				Value: slog.StringValue(messageDomain),
