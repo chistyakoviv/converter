@@ -13,3 +13,13 @@ func isConvertible(from, to string) bool {
 	_, convertible := formatInfo.SupportedFormats[to]
 	return convertible
 }
+
+func IsImage(ext string) bool {
+	_, isImage := ImageFormats[ext]
+	return isImage
+}
+
+func IsVideo(ext string) bool {
+	_, isVideo := VideoFormats[ext]
+	return isVideo
+}

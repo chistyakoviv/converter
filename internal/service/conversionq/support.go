@@ -5,21 +5,33 @@ type FormatInfo struct {
 }
 
 var (
-	ImageFormats = FormatInfo{
+	ImageConversionFormats = FormatInfo{
 		SupportedFormats: map[string]bool{
 			"webp": true,
 			"avif": true,
 		},
 	}
-	VideoFormats = FormatInfo{
+
+	VideoConversionFormats = FormatInfo{
 		SupportedFormats: map[string]bool{
 			"webm": true,
 		},
 	}
+
 	FileTypeToFormatMap = map[string]*FormatInfo{
-		"jpg":  &ImageFormats,
-		"jpeg": &ImageFormats,
-		"png":  &ImageFormats,
-		"mp4":  &VideoFormats,
+		"jpg":  &ImageConversionFormats,
+		"jpeg": &ImageConversionFormats,
+		"png":  &ImageConversionFormats,
+		"mp4":  &VideoConversionFormats,
+	}
+
+	ImageFormats = map[string]bool{
+		"jpg":  true,
+		"jpeg": true,
+		"png":  true,
+	}
+
+	VideoFormats = map[string]bool{
+		"mp4": true,
 	}
 )

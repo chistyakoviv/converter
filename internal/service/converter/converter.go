@@ -74,7 +74,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 			if err := s.imageConverter.ToWebp(src, dest, mergedConf); err != nil {
 				return NewConversionError(err.Error(), ErrConversion)
 			}
-		case "mp4":
+		case "webm":
 			mergedConf := converter.MergeConfigs(s.defaultVideoFormats[ext], conf)
 			if err := s.videoConverter.ToWebm(src, dest, mergedConf); err != nil {
 				return NewConversionError(err.Error(), ErrConversion)

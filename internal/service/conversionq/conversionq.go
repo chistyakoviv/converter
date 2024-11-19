@@ -43,7 +43,12 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 
 	// Assign default format if no target formats are specified
 	if info.ConvertTo == nil {
-		info.ConvertTo = s.imageDefaultFormats
+		// TODO: replace checking media type with a library using magic numbers
+		if IsImage(info.Ext) {
+			info.ConvertTo = s.imageDefaultFormats
+		} else if IsVideo(info.Ext) {
+			info.ConvertTo = s.videoDefaultFormats
+		}
 	} else {
 		var unsupportedFormats []string
 		var invalidConversionFormat []string
