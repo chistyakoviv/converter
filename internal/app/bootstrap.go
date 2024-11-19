@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -156,6 +157,12 @@ func bootstrap(ctx context.Context, c di.Container) {
 	})
 
 	c.RegisterSingleton("converterService", func(c di.Container) service.ConverterService {
-		return converterService.NewService(resolveConfig(c), resolveLogger(c), resolveImageConverter(c))
+		serv, err := converterService.NewService(resolveConfig(c), resolveLogger(c), resolveImageConverter(c))
+
+		if err != nil {
+			log.Fatalf("Couldn't create converter service: %v", err)
+		}
+
+		return serv
 	})
 }

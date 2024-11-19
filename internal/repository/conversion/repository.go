@@ -3,6 +3,7 @@ package conversion
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/db"
@@ -50,6 +51,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			extColumn,
 			convertToColumn,
 			replaceOrigExtColumn,
+			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
@@ -58,6 +60,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			file.Ext,
 			file.ConvertTo,
 			file.ReplaceOrigExt,
+			time.Now(),
 		).
 		Suffix("RETURNING id")
 

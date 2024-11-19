@@ -13,6 +13,8 @@ type Config struct {
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Postgres   Postgres   `yaml:"database"`
 	Task       Task       `yaml:"task"`
+	Image      Image      `yaml:"image"`
+	Video      Video      `yaml:"video"`
 }
 
 type Postgres struct {
@@ -33,6 +35,14 @@ type HTTPServer struct {
 
 type Task struct {
 	CheckTimeout time.Duration `yaml:"check_timeout" env:"TASK_CHECK_TIMEOUT" env-default:"5m0s"`
+}
+
+type Image struct {
+	DefaultFormats string `yaml:"default_formats" env:"IMAGE_DEFAULT_FORMATS" env-required:"true"`
+}
+
+type Video struct {
+	DefaultFormats string `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown

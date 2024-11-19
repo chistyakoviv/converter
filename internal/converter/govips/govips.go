@@ -71,7 +71,7 @@ func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageC
 	}
 }
 
-func (c *conv) ToWebp(from string, to string) error {
+func (c *conv) ToWebp(from string, to string, conf converter.ConversionConfig) error {
 	const op = "govips.ToWebp"
 
 	logger := c.logger.With(slog.String("op", op))

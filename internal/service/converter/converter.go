@@ -14,17 +14,32 @@ import (
 )
 
 type serv struct {
-	cfg            *config.Config
-	logger         *slog.Logger
-	imageConverter converter.ImageConverter
+	cfg                 *config.Config
+	logger              *slog.Logger
+	imageConverter      converter.ImageConverter
+	defaultImageFormats converter.ConversionFormats
+	defaultVideoFormats converter.ConversionFormats
 }
 
-func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converter.ImageConverter) service.ConverterService {
-	return &serv{
-		cfg:            cfg,
-		logger:         logger,
-		imageConverter: imageConverter,
+func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converter.ImageConverter) (service.ConverterService, error) {
+	defaultImageFormats, err := converter.ParseFormats(cfg.Image.DefaultFormats)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse default image formats: %w", err)
 	}
+	defaultVideoFormats, err := converter.ParseFormats(cfg.Video.DefaultFormats)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse default video formats: %w", err)
+	}
+
+	fmt.Printf("default image formats: %v\n", defaultImageFormats)
+	fmt.Printf("default video formats: %v\n", defaultVideoFormats)
+	return &serv{
+		cfg:                 cfg,
+		logger:              logger,
+		imageConverter:      imageConverter,
+		defaultImageFormats: defaultImageFormats,
+		defaultVideoFormats: defaultVideoFormats,
+	}, nil
 }
 
 func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
@@ -42,11 +57,16 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 	if !info.ReplaceOrigExt {
 		destPrefix = fmt.Sprintf("%s.%s", destPrefix, info.Ext)
 	}
-	for _, ext := range info.ConvertTo {
+	for _, entry := range info.ConvertTo {
+		ext, conf, err := converter.ParseFormat(entry)
+		if err != nil {
+			return NewConversionError(err.Error(), ErrInvalidConversionFormat)
+		}
 		dest := fmt.Sprintf("%s.%s", destPrefix, ext)
 		switch ext {
 		case "webp":
-			if err := s.imageConverter.ToWebp(src, dest); err != nil {
+			mergedConf := converter.MergeConfigs(s.defaultImageFormats[ext], conf)
+			if err := s.imageConverter.ToWebp(src, dest, mergedConf); err != nil {
 				return NewConversionError(err.Error(), ErrConversion)
 			}
 		default:
