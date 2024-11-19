@@ -17,6 +17,7 @@ type ConversionQueueService interface {
 type TaskService interface {
 	TrySchedule() bool
 	Tasks() <-chan interface{}
+	Process(ctx context.Context) error
 }
 
 type ConverterService interface {

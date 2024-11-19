@@ -1,13 +1,32 @@
 package task
 
-import "github.com/chistyakoviv/converter/internal/service"
+import (
+	"context"
+	"errors"
+	"log/slog"
+
+	"github.com/chistyakoviv/converter/internal/db"
+	"github.com/chistyakoviv/converter/internal/lib/slogger"
+	"github.com/chistyakoviv/converter/internal/service"
+	"github.com/chistyakoviv/converter/internal/service/converter"
+)
 
 type serv struct {
-	queue chan interface{}
+	logger                 *slog.Logger
+	conversionQueueService service.ConversionQueueService
+	converterService       service.ConverterService
+	queue                  chan interface{}
 }
 
-func NewService() service.TaskService {
+func NewService(
+	logger *slog.Logger,
+	conversionQueueService service.ConversionQueueService,
+	converterService service.ConverterService,
+) service.TaskService {
 	return &serv{
+		logger:                 logger,
+		conversionQueueService: conversionQueueService,
+		converterService:       converterService,
 		// The size of channel is 2 to check for new tasks immediately
 		// after some task is processed
 		queue: make(chan interface{}, 2),
@@ -26,4 +45,31 @@ func (s *serv) TrySchedule() bool {
 
 func (s *serv) Tasks() <-chan interface{} {
 	return s.queue
+}
+
+func (s *serv) Process(ctx context.Context) error {
+	for {
+		fileInfo, err := s.conversionQueueService.Pop(ctx)
+		if errors.Is(err, db.ErrNotFound) {
+			return nil
+		}
+
+		if err != nil {
+			s.logger.Error("failed to get conversion task", slogger.Err(err))
+			return err
+		}
+
+		err = s.converterService.Convert(ctx, fileInfo)
+		if err != nil {
+			s.logger.Error("failed to convert file", slogger.Err(err))
+			s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, converter.GetConversionError(err).Code())
+			continue
+		}
+
+		err = s.conversionQueueService.MarkAsCompleted(ctx, fileInfo.Fullpath)
+		if err != nil {
+			s.logger.Error("failed to mark as completed", slogger.Err(err))
+			return err
+		}
+	}
 }
