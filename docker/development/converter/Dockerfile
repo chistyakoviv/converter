@@ -4,9 +4,12 @@ FROM golang:1.23.2-alpine3.20
 ENV CGO_ENABLED=1
 
 # build-base allows to run programs with -race flag
+RUN apk add --update --no-cache build-base entr git openssl
+
+# Dependencies for VIPS
 # aom-dev library (for AV1 support)
 # libheif library (for HEIF/AVIF decoding)
-RUN apk add --update --no-cache build-base entr git openssl \
+RUN apk add --update --no-cache \
     vips \
     vips-dev \
     gcc \
@@ -22,6 +25,11 @@ RUN apk add --update --no-cache build-base entr git openssl \
     tiff-dev \
     libheif-dev \
     aom-dev
+
+# Dependencies for FFmpeg
+# Verify FFmpeg installation: ffmpeg -codecs | grep -E "libvpx|libopus"
+# No need to install liboupus-dev and libvpx-dev, because the Alpine ffmpeg package already includes support for them
+RUN apk add --update --no-cache ffmpeg
 
 # Change working directory after installing dependencies
 # (in case some deps are needed to be dowlaoded, unpacked and copied to the right place)
