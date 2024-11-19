@@ -32,20 +32,20 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		return err
 	}
 
-	absolutePath := fmt.Sprintf("%s/%s", wd, info.Fullpath)
-	if !file.Exists(absolutePath) {
+	src := fmt.Sprintf("%s/%s", wd, info.Fullpath)
+	if !file.Exists(src) {
 		return NewConversionError(fmt.Sprintf("file '%s' does not exist", info.Fullpath), ErrFileDoesNotExist)
 	}
 
-	path := fmt.Sprintf("%s%s/%s", wd, info.Path, info.Filestem)
+	destPrefix := fmt.Sprintf("%s%s/%s", wd, info.Path, info.Filestem)
 	if !info.ReplaceOrigExt {
-		path = fmt.Sprintf("%s.%s", path, info.Ext)
+		destPrefix = fmt.Sprintf("%s.%s", destPrefix, info.Ext)
 	}
 	for _, ext := range info.ConvertTo {
-		output := fmt.Sprintf("%s.%s", path, ext)
+		dest := fmt.Sprintf("%s.%s", destPrefix, ext)
 		switch ext {
 		case "webp":
-			if err := s.imageConverter.ToWebp(absolutePath, output); err != nil {
+			if err := s.imageConverter.ToWebp(src, dest); err != nil {
 				return NewConversionError(err.Error(), ErrConversion)
 			}
 		default:
