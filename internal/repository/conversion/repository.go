@@ -170,7 +170,11 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 }
 
 func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
-	builder := r.sq.Update(tablename).Set(isDoneColumn, true).Where(sq.Eq{fullpathColumn: fullpath})
+	builder := r.sq.
+		Update(tablename).
+		Set(isDoneColumn, true).
+		Set(updatedAtColumn, time.Now()).
+		Where(sq.Eq{fullpathColumn: fullpath})
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
@@ -190,7 +194,12 @@ func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
 }
 
 func (r *repo) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {
-	builder := r.sq.Update(tablename).Set(isCanceledColumn, true).Set(errorCodeColumn, code).Where(sq.Eq{fullpathColumn: fullpath})
+	builder := r.sq.
+		Update(tablename).
+		Set(isCanceledColumn, true).
+		Set(updatedAtColumn, time.Now()).
+		Set(errorCodeColumn, code).
+		Where(sq.Eq{fullpathColumn: fullpath})
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
