@@ -63,6 +63,9 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		}
 	}
 
+	// TODO: come up with a better way to handle default values
+	// info.ReplaceOrigExt = info.ReplaceOrigExt || s.cfg.Image.ReplaceOrigExt
+
 	var id int64
 
 	// Since it's not possible to preemptively check if a query violates constraints,

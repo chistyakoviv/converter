@@ -39,10 +39,12 @@ type Task struct {
 
 type Image struct {
 	DefaultFormats string `yaml:"default_formats" env:"IMAGE_DEFAULT_FORMATS" env-required:"true"`
+	ReplaceOrigExt bool   `yaml:"replace_orig_ext" env:"IMAGE_REPLACE_ORIG_EXT" env-default:"false"`
 }
 
 type Video struct {
 	DefaultFormats string `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
+	ReplaceOrigExt bool   `yaml:"replace_orig_ext" env:"VIDEO_REPLACE_ORIG_EXT" env-default:"false"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
