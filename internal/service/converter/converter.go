@@ -31,8 +31,6 @@ func NewService(cfg *config.Config, logger *slog.Logger, imageConverter converte
 		return nil, fmt.Errorf("failed to parse default video formats: %w", err)
 	}
 
-	fmt.Printf("default image formats: %v\n", defaultImageFormats)
-	fmt.Printf("default video formats: %v\n", defaultVideoFormats)
 	return &serv{
 		cfg:                 cfg,
 		logger:              logger,
