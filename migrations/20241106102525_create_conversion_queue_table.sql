@@ -7,10 +7,9 @@ CREATE TABLE IF NOT EXISTS conversion_queue
     path             VARCHAR(255) NOT NULL,
     filestem         VARCHAR(255) NOT NULL, -- filename without extension (e. g. /path/to/photo.ext -> photo)
     ext              VARCHAR(255) NOT NULL,
-    convert_to       VARCHAR(50)[] NOT NULL,
+    convert_to       JSONB NOT NULL,
     is_done          BOOLEAN NOT NULL DEFAULT FALSE,
     is_canceled      BOOLEAN NOT NULL DEFAULT FALSE,
-    replace_orig_ext BOOLEAN NOT NULL DEFAULT FALSE,
     error_code       INTEGER NOT NULL DEFAULT 0,
     created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMP

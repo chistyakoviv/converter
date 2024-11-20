@@ -16,18 +16,17 @@ import (
 const (
 	tablename = "conversion_queue"
 
-	idColumn             = "id"
-	fullpathColumn       = "fullpath"
-	pathColumn           = "path"
-	filestemColumn       = "filestem"
-	extColumn            = "ext"
-	convertToColumn      = "convert_to"
-	isDoneColumn         = "is_done"
-	isCanceledColumn     = "is_canceled"
-	replaceOrigExtColumn = "replace_orig_ext"
-	errorCodeColumn      = "error_code"
-	createdAtColumn      = "created_at"
-	updatedAtColumn      = "updated_at"
+	idColumn         = "id"
+	fullpathColumn   = "fullpath"
+	pathColumn       = "path"
+	filestemColumn   = "filestem"
+	extColumn        = "ext"
+	convertToColumn  = "convert_to"
+	isDoneColumn     = "is_done"
+	isCanceledColumn = "is_canceled"
+	errorCodeColumn  = "error_code"
+	createdAtColumn  = "created_at"
+	updatedAtColumn  = "updated_at"
 )
 
 type repo struct {
@@ -50,8 +49,6 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			filestemColumn,
 			extColumn,
 			convertToColumn,
-			replaceOrigExtColumn,
-			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
@@ -59,8 +56,6 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			file.Filestem,
 			file.Ext,
 			file.ConvertTo,
-			file.ReplaceOrigExt,
-			time.Now(),
 		).
 		Suffix("RETURNING id")
 
@@ -106,7 +101,6 @@ func (r *repo) GetByFullpath(ctx context.Context, fullpath string) (*model.Conve
 		&file.ConvertTo,
 		&file.IsDone,
 		&file.IsCanceled,
-		&file.ReplaceOrigExt,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -154,7 +148,6 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 		&file.ConvertTo,
 		&file.IsDone,
 		&file.IsCanceled,
-		&file.ReplaceOrigExt,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/chistyakoviv/converter/internal/config"
-	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
@@ -18,8 +17,6 @@ type serv struct {
 	cfg                  *config.Config
 	txManager            db.TxManager
 	conversionRepository repository.ConversionQueueRepository
-	imageDefaultFormats  []string
-	videoDefaultFormats  []string
 }
 
 func NewService(
@@ -31,8 +28,6 @@ func NewService(
 		cfg:                  cfg,
 		txManager:            txManager,
 		conversionRepository: conversionRepository,
-		imageDefaultFormats:  converter.Formats(cfg.Image.DefaultFormats),
-		videoDefaultFormats:  converter.Formats(cfg.Video.DefaultFormats),
 	}
 }
 
@@ -45,23 +40,16 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	if info.ConvertTo == nil {
 		// TODO: replace checking media type with a library using magic numbers
 		if IsImage(info.Ext) {
-			info.ConvertTo = s.imageDefaultFormats
+			info.ConvertTo = s.cfg.Image.DefaultFormats
 		} else if IsVideo(info.Ext) {
-			info.ConvertTo = s.videoDefaultFormats
+			info.ConvertTo = s.cfg.Video.DefaultFormats
 		}
 	} else {
 		var unsupportedFormats []string
-		var invalidConversionFormat []string
 		for _, entry := range info.ConvertTo {
-			ext, _, err := converter.ParseFormat(entry)
-			if err != nil {
-				invalidConversionFormat = append(invalidConversionFormat, entry)
-			} else if !isConvertible(info.Ext, ext) {
-				unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", ext))
+			if !isConvertible(info.Ext, entry.Ext) {
+				unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", entry.Ext))
 			}
-		}
-		if len(invalidConversionFormat) > 0 {
-			return -1, fmt.Errorf("invalid conversion format: %s", strings.Join(invalidConversionFormat, ", "))
 		}
 		if len(unsupportedFormats) > 0 {
 			return -1, fmt.Errorf("file type '%s' is not convertible to %s", info.Ext, strings.Join(unsupportedFormats, ", "))

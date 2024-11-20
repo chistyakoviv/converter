@@ -16,11 +16,10 @@ func ToConversionInfoFromRequest(dto request.ConversionRequest) *model.Conversio
 	fileExt := filepath.Ext(dto.Path)
 
 	return &model.ConversionInfo{
-		Fullpath:       dto.Path,
-		Path:           filepath.Dir(dto.Path),
-		Filestem:       strings.TrimSuffix(fileName, fileExt),
-		Ext:            strings.TrimPrefix(fileExt, "."),
-		ConvertTo:      dto.ConvertTo,
-		ReplaceOrigExt: dto.ReplaceOrigExt,
+		Fullpath:  dto.Path,
+		Path:      filepath.Dir(dto.Path),
+		Filestem:  strings.TrimSuffix(fileName, fileExt),
+		Ext:       strings.TrimPrefix(fileExt, "."),
+		ConvertTo: dto.ConvertTo,
 	}
 }

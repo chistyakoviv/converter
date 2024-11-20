@@ -1,7 +1,8 @@
 package request
 
+import "github.com/chistyakoviv/converter/internal/model"
+
 type ConversionRequest struct {
-	Path           string   `json:"path" validate:"required"`
-	ConvertTo      []string `json:"convert_to,omitempty"`
-	ReplaceOrigExt bool     `json:"replace_orig_ext,omitempty"`
+	Path      string            `json:"path" validate:"required"`
+	ConvertTo []model.ConvertTo `json:"convert_to,omitempty"`
 }
