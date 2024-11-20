@@ -40,12 +40,10 @@ type Task struct {
 
 type Image struct {
 	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"IMAGE_DEFAULT_FORMATS" env-required:"true"`
-	ReplaceOrigExt bool              `yaml:"replace_orig_ext" env:"IMAGE_REPLACE_ORIG_EXT" env-default:"false"`
 }
 
 type Video struct {
 	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
-	ReplaceOrigExt bool              `yaml:"replace_orig_ext" env:"VIDEO_REPLACE_ORIG_EXT" env-default:"false"`
 	Threads        int               `yaml:"threads" env:"VIDEO_THREADS" env-default:"4"`
 }
 

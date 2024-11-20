@@ -9,6 +9,8 @@ services:
     tty: true
     ports:
       - 80:8080 # http
+    # environment:
+      # - 'VIDEO_DEFAULT_FORMATS="[{"ext": "webm", "replace_orig_ext": true, "conv_conf": {"c:v": "libvpx-vp9", "c:a": "libopus", "b:v": "1M", "b:a": "128k"}}]"'
 
   go-cli:
     image: golang:1.23.2-alpine3.20
