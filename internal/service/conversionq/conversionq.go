@@ -8,6 +8,7 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/db"
+	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/service"
@@ -32,17 +33,29 @@ func NewService(
 }
 
 func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, error) {
+	if !file.Exists(info.Fullpath) {
+		return -1, fmt.Errorf("file '%s' does not exist", info.Fullpath)
+	}
 	if !isSupported(info.Ext) {
 		return -1, fmt.Errorf("file type '%s' not supported", info.Ext)
 	}
 
 	// Assign default format if no target formats are specified
 	if info.ConvertTo == nil {
-		// TODO: replace checking media type with a library using magic numbers
-		if IsImage(info.Ext) {
+		var err error
+		var ok bool
+
+		if ok, err = file.IsImage(info.Fullpath); ok {
 			info.ConvertTo = s.cfg.Image.DefaultFormats
-		} else if IsVideo(info.Ext) {
+		}
+		if err != nil {
+			return -1, fmt.Errorf("failed to determine file type: %w", err)
+		}
+		if ok, err = file.IsVideo(info.Fullpath); ok {
 			info.ConvertTo = s.cfg.Video.DefaultFormats
+		}
+		if err != nil {
+			return -1, fmt.Errorf("failed to determine file type: %w", err)
 		}
 	} else {
 		var unsupportedFormats []string

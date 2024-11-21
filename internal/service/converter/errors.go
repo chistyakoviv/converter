@@ -9,9 +9,9 @@ type conversionError struct {
 
 const (
 	ErrFileDoesNotExist uint32 = iota + 1
-	ErrConversion
+	ErrUnableToConvertFile
 	ErrInvalidConversionFormat
-	ErrPopFailed
+	ErrWrongSourceFile
 )
 
 func NewConversionError(msg string, code uint32) *conversionError {

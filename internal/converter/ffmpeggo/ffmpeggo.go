@@ -22,8 +22,8 @@ func NewVideoConverter(cfg *config.Config, logger *slog.Logger) converter.VideoC
 	}
 }
 
-func (c *conf) ToWebm(from string, to string, conf converter.ConversionConfig) error {
-	const op = "ffmpeg-go.ToWebm"
+func (c *conf) Convert(from string, to string, conf converter.ConversionConfig) error {
+	const op = "ffmpeg-go.Convert"
 
 	logger := c.logger.With(slog.String("op", op))
 

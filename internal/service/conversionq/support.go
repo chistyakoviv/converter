@@ -15,6 +15,7 @@ var (
 	VideoConversionFormats = FormatInfo{
 		SupportedFormats: map[string]bool{
 			"webm": true,
+			"mp4":  true,
 		},
 	}
 
@@ -32,6 +33,7 @@ var (
 	}
 
 	VideoFormats = map[string]bool{
-		"mp4": true,
+		"mp4":  true,
+		"webm": true,
 	}
 )

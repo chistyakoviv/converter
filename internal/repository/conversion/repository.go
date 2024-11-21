@@ -121,7 +121,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 	builder := r.sq.
 		Select("*").
 		From(tablename).
-		OrderBy(fmt.Sprintf("%s DESC", createdAtColumn)).
+		OrderBy(fmt.Sprintf("%s DESC", updatedAtColumn)).
 		Where(
 			sq.And{
 				sq.Eq{isDoneColumn: false},

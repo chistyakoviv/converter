@@ -8,7 +8,7 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
-	"github.com/chistyakoviv/converter/internal/lib/file"
+	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/service"
 )
@@ -52,18 +52,18 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		return err
 	}
 
-	src := fmt.Sprintf("%s%s", wd, info.Fullpath)
-	if !file.Exists(src) {
+	if !file.Exists(info.Fullpath) {
 		return NewConversionError(fmt.Sprintf("file '%s' does not exist", info.Fullpath), ErrFileDoesNotExist)
 	}
 
+	src := fmt.Sprintf("%s%s", wd, info.Fullpath)
 	destPrefix := fmt.Sprintf("%s%s/%s", wd, info.Path, info.Filestem)
 	for _, entry := range info.ConvertTo {
 		dest := destPrefix
-		boolOk := false
-		replaceOrigExt := false
+		var isReplaceOrigExtBool bool
+		var replaceOrigExt bool
 		if value, ok := entry.Optional["replace_orig_ext"]; ok {
-			if replaceOrigExt, boolOk = value.(bool); boolOk {
+			if replaceOrigExt, isReplaceOrigExtBool = value.(bool); isReplaceOrigExtBool {
 				replaceOrigExt = true
 			}
 		}
@@ -71,19 +71,29 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 			dest = fmt.Sprintf("%s.%s", dest, info.Ext)
 		}
 		dest = fmt.Sprintf("%s.%s", dest, entry.Ext)
-		switch entry.Ext {
-		case "webp":
+		var filetypeErr error
+		var imageOk bool
+		var videoOk bool
+		if imageOk, filetypeErr = file.IsImage(info.Fullpath); imageOk {
 			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Ext], entry.ConvConf)
-			if err := s.imageConverter.ToWebp(src, dest, mergedConf); err != nil {
-				return NewConversionError(err.Error(), ErrConversion)
+			if err := s.imageConverter.Convert(src, dest, mergedConf); err != nil {
+				return NewConversionError(err.Error(), ErrUnableToConvertFile)
 			}
-		case "webm":
+		}
+		if filetypeErr != nil {
+			return NewConversionError(filetypeErr.Error(), ErrInvalidConversionFormat)
+		}
+		if videoOk, filetypeErr = file.IsVideo(info.Fullpath); videoOk {
 			mergedConf := converter.MergeConfigs(s.videoConfigs[entry.Ext], entry.ConvConf)
-			if err := s.videoConverter.ToWebm(src, dest, mergedConf); err != nil {
-				return NewConversionError(err.Error(), ErrConversion)
+			if err := s.videoConverter.Convert(src, dest, mergedConf); err != nil {
+				return NewConversionError(err.Error(), ErrUnableToConvertFile)
 			}
-		default:
-			return NewConversionError(fmt.Sprintf("conversion to '%s' is not implemented", entry.Ext), ErrInvalidConversionFormat)
+		}
+		if filetypeErr != nil {
+			return NewConversionError(filetypeErr.Error(), ErrInvalidConversionFormat)
+		}
+		if !imageOk && !videoOk {
+			return NewConversionError(fmt.Sprintf("the file is not an image or video: %s", info.Fullpath), ErrWrongSourceFile)
 		}
 	}
 	return nil

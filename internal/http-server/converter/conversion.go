@@ -19,7 +19,7 @@ func ToConversionInfoFromRequest(dto request.ConversionRequest) *model.Conversio
 		Fullpath:  dto.Path,
 		Path:      filepath.Dir(dto.Path),
 		Filestem:  strings.TrimSuffix(fileName, fileExt),
-		Ext:       strings.TrimPrefix(fileExt, "."),
+		Ext:       strings.ToLower(strings.TrimPrefix(fileExt, ".")),
 		ConvertTo: dto.ConvertTo,
 	}
 }
