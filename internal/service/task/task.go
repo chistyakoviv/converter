@@ -27,9 +27,7 @@ func NewService(
 		logger:                 logger,
 		conversionQueueService: conversionQueueService,
 		converterService:       converterService,
-		// The size of channel is 2 to check for new tasks immediately
-		// after some task is processed
-		queue: make(chan interface{}, 2),
+		queue:                  make(chan interface{}),
 	}
 }
 
