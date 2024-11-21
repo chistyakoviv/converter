@@ -12,14 +12,15 @@ http_server:
   write_timeout: 4s
   idle_timeout: 60s
 task:
-  check_timeout: 5s
+  check_timeout: 5m
 image:
   default_formats:
     - ext: "webp"
 video:
   default_formats: 
     - ext: "webm"
-      replace_orig_ext: true
+      optional:
+        replace_orig_ext: true
       conv_conf:
         c:v: "libvpx-vp9"
         c:a: "libopus"

@@ -45,16 +45,15 @@ func (item *ConvertTo) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Now, attempt to extract the known fields
 	if ext, ok := rawData["ext"]; ok {
 		item.Ext = ext.(string) // Assuming ext is a string
-		delete(rawData, "ext")
 	}
 
 	if conf, ok := rawData["conv_conf"]; ok {
 		item.ConvConf = conf.(map[string]interface{}) // Assuming conf is a map
-		delete(rawData, "conv_conf")
 	}
 
-	// Store the remaining fields (other than ext and conf) in the Optional map
-	item.Optional = rawData
+	if optional, ok := rawData["optional"]; ok {
+		item.Optional = optional.(map[string]interface{}) // Assuming optional is a map
+	}
 
 	return nil
 }

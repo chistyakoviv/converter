@@ -49,6 +49,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			filestemColumn,
 			extColumn,
 			convertToColumn,
+			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
@@ -56,6 +57,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			file.Filestem,
 			file.Ext,
 			file.ConvertTo,
+			time.Now(),
 		).
 		Suffix("RETURNING id")
 
