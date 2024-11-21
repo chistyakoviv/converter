@@ -24,6 +24,7 @@ video:
       conv_conf:
         c:v: "libvpx-vp9"
         c:a: "libopus"
-        b:v: "1M"
+        b:v: "0"
+        crf: "30"
         b:a: "128k"
   threads: 4
