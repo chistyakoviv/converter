@@ -18,6 +18,7 @@ func IsImage(src string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer file.Close()
 
 	head := make([]byte, headSize)
 	file.Read(head)
@@ -34,6 +35,7 @@ func IsVideo(src string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer file.Close()
 
 	head := make([]byte, headSize)
 	file.Read(head)
