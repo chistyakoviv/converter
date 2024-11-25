@@ -33,7 +33,11 @@ func NewService(
 }
 
 func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, error) {
-	if !file.Exists(info.Fullpath) {
+	src, err := info.AbsoluteSourcePath()
+	if err != nil {
+		return -1, err
+	}
+	if !file.Exists(src) {
 		return -1, fmt.Errorf("file '%s' does not exist", info.Fullpath)
 	}
 	if !isSupported(info.Ext) {
@@ -75,9 +79,9 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	// use a transaction to first verify that `fullpath` does not already exist.
 	// If `fullpath` exists, return an appropriate error. Otherwise, proceed to
 	// insert a new row within the same transaction.
-	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var errTx error
-		_, errTx = s.conversionRepository.GetByFullpath(ctx, info.Fullpath)
+		_, errTx = s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
 			if errTx == nil {
 				return ErrPathAlreadyExist
@@ -106,8 +110,4 @@ func (s *serv) MarkAsCompleted(ctx context.Context, fullpath string) error {
 
 func (s *serv) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {
 	return s.conversionRepository.MarkAsCanceled(ctx, fullpath, code)
-}
-
-func (s *serv) Delete(ctx context.Context, fullpath string) error {
-	return nil
 }

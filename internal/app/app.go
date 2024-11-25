@@ -76,17 +76,23 @@ func (a *app) Run(ctx context.Context) {
 		ticker := time.NewTicker(cfg.Task.CheckTimeout)
 		defer ticker.Stop()
 		for range ticker.C {
-			taskService.TrySchedule()
+			taskService.TryQueueConversion()
+			taskService.TryQueueDeletion()
 		}
 	}()
 
-	// Task processing
+	// Process conversion
 	go func() {
-		logger.Info("task processing started")
+		logger.Info("conversion tasks processing started")
 
-		for range taskService.Tasks() {
-			taskService.Process(ctx)
-		}
+		taskService.ProcessConversion(ctx)
+	}()
+
+	// Process deletion
+	go func() {
+		logger.Info("deletion tasks processing started")
+
+		taskService.ProcessDeletion(ctx)
 	}()
 
 	// Graceful Shutdown

@@ -142,12 +142,32 @@ func resolveConversionQueueRepository(c di.Container) repository.ConversionQueue
 	return repo
 }
 
+func resolveDeletionQueueRepository(c di.Container) repository.DeletionQueueRepository {
+	repo, err := di.Resolve[repository.DeletionQueueRepository](c, "deletionQueueRepository")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve deletion queue repository definition: %v", err)
+	}
+
+	return repo
+}
+
 // Services
 func resolveConversionQueueService(c di.Container) service.ConversionQueueService {
 	serv, err := di.Resolve[service.ConversionQueueService](c, "conversionQueueService")
 
 	if err != nil {
 		log.Fatalf("Couldn't resolve conversion service definition: %v", err)
+	}
+
+	return serv
+}
+
+func resolveDeletionQueueService(c di.Container) service.DeletionQueueService {
+	serv, err := di.Resolve[service.DeletionQueueService](c, "deletionQueueService")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve deletion service definition: %v", err)
 	}
 
 	return serv

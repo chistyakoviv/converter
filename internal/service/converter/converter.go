@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
@@ -47,33 +46,23 @@ func NewService(
 }
 
 func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
-	wd, err := os.Getwd()
+	src, err := info.AbsoluteSourcePath()
+	s.logger.Debug("convert", slog.String("src", src))
 	if err != nil {
-		return err
+		return NewConversionError(err.Error(), ErrUnableToConvertFile)
 	}
 
-	if !file.Exists(info.Fullpath) {
-		return NewConversionError(fmt.Sprintf("file '%s' does not exist", info.Fullpath), ErrFileDoesNotExist)
+	if !file.Exists(src) {
+		return NewConversionError(fmt.Sprintf("file '%s' does not exist", src), ErrFileDoesNotExist)
 	}
 
-	src := fmt.Sprintf("%s%s", wd, info.Fullpath)
-	destPrefix := fmt.Sprintf("%s%s/%s", wd, info.Path, info.Filestem)
 	for _, entry := range info.ConvertTo {
-		dest := destPrefix
-		var isReplaceOrigExtBool bool
-		var replaceOrigExt bool
-		if value, ok := entry.Optional["replace_orig_ext"]; ok {
-			if replaceOrigExt, isReplaceOrigExtBool = value.(bool); isReplaceOrigExtBool {
-				replaceOrigExt = true
-			}
+		dest, err := info.AbsoluteDestinationPath(entry.Ext)
+		if err != nil {
+			return NewConversionError(err.Error(), ErrUnableToConvertFile)
 		}
-		if !replaceOrigExt {
-			dest = fmt.Sprintf("%s.%s", dest, info.Ext)
-		}
-		dest = fmt.Sprintf("%s.%s", dest, entry.Ext)
 		var filetypeErr error
-		var imageOk bool
-		var videoOk bool
+		var imageOk, videoOk bool
 		if imageOk, filetypeErr = file.IsImage(info.Fullpath); imageOk {
 			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Ext], entry.ConvConf)
 			if err := s.imageConverter.Convert(src, dest, mergedConf); err != nil {

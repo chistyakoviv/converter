@@ -21,9 +21,11 @@ import (
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/repository"
 	conversionRepository "github.com/chistyakoviv/converter/internal/repository/conversion"
+	deletionRepository "github.com/chistyakoviv/converter/internal/repository/deletion"
 	"github.com/chistyakoviv/converter/internal/service"
 	conversionQueueService "github.com/chistyakoviv/converter/internal/service/conversionq"
 	converterService "github.com/chistyakoviv/converter/internal/service/converter"
+	deletionQueueService "github.com/chistyakoviv/converter/internal/service/deletionq"
 	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -158,6 +160,10 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return conversionRepository.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
 	})
 
+	c.RegisterSingleton("deletionQueueRepository", func(c di.Container) repository.DeletionQueueRepository {
+		return deletionRepository.NewRepository(resolveDbClient(c), resolveStatementBuilder(c))
+	})
+
 	// Services
 	c.RegisterSingleton("conversionQueueService", func(c di.Container) service.ConversionQueueService {
 		return conversionQueueService.NewService(
@@ -167,11 +173,22 @@ func bootstrap(ctx context.Context, c di.Container) {
 		)
 	})
 
+	c.RegisterSingleton("deletionQueueService", func(c di.Container) service.DeletionQueueService {
+		return deletionQueueService.NewService(
+			resolveConfig(c),
+			resolveLogger(c),
+			resolveTxManager(c),
+			resolveDeletionQueueRepository(c),
+		)
+	})
+
 	c.RegisterSingleton("taskService", func(c di.Container) service.TaskService {
 		return task.NewService(
 			resolveLogger(c),
 			resolveConversionQueueService(c),
+			resolveDeletionQueueService(c),
 			resolveConverterService(c),
+			resolveConversionQueueRepository(c),
 		)
 	})
 

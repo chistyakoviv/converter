@@ -1,4 +1,4 @@
-package conversion
+package deletion
 
 import (
 	"context"
@@ -14,14 +14,10 @@ import (
 )
 
 const (
-	tablename = "conversion_queue"
+	tablename = "deletion_queue"
 
 	idColumn         = "id"
 	fullpathColumn   = "fullpath"
-	pathColumn       = "path"
-	filestemColumn   = "filestem"
-	extColumn        = "ext"
-	convertToColumn  = "convert_to"
 	isDoneColumn     = "is_done"
 	isCanceledColumn = "is_canceled"
 	errorCodeColumn  = "error_code"
@@ -34,29 +30,21 @@ type repo struct {
 	sq sq.StatementBuilderType
 }
 
-func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.ConversionQueueRepository {
+func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.DeletionQueueRepository {
 	return &repo{
 		db: db,
 		sq: sq,
 	}
 }
 
-func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, error) {
+func (r *repo) Create(ctx context.Context, file *model.DeletionInfo) (int64, error) {
 	builder := r.sq.Insert(tablename).
 		Columns(
 			fullpathColumn,
-			pathColumn,
-			filestemColumn,
-			extColumn,
-			convertToColumn,
 			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
-			file.Path,
-			file.Filestem,
-			file.Ext,
-			file.ConvertTo,
 			time.Now(),
 		).
 		Suffix("RETURNING id")
@@ -67,7 +55,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.Create",
+		Name:     "repository.deletion_queue.Create",
 		QueryRaw: sql,
 	}
 
@@ -80,8 +68,12 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 	return id, nil
 }
 
-func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conversion, error) {
-	builder := r.sq.Select("*").From(tablename).Where(sq.Eq{fullpathColumn: fullpath}).Limit(1)
+func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Deletion, error) {
+	builder := r.sq.
+		Select("*").
+		From(tablename).
+		Where(sq.Eq{fullpathColumn: fullpath}).
+		Limit(1)
 
 	sql, args, err := builder.ToSql()
 	if err != nil {
@@ -89,18 +81,14 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.FindByFullpath",
+		Name:     "repository.deletion_queue.GetByFullpath",
 		QueryRaw: sql,
 	}
 
-	var file model.Conversion
+	var file model.Deletion
 	err = r.db.DB().QueryRow(ctx, query, args...).Scan(
 		&file.Id,
 		&file.Fullpath,
-		&file.Path,
-		&file.Filestem,
-		&file.Ext,
-		&file.ConvertTo,
 		&file.IsDone,
 		&file.IsCanceled,
 		&file.ErrorCode,
@@ -117,7 +105,7 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 	return &file, nil
 }
 
-func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) {
+func (r *repo) FindOldestQueued(ctx context.Context) (*model.Deletion, error) {
 	builder := r.sq.
 		Select("*").
 		From(tablename).
@@ -136,18 +124,14 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.FindOldestQueued",
+		Name:     "repository.deletion_queue.FindOldestQueued",
 		QueryRaw: sql,
 	}
 
-	var file model.Conversion
+	var file model.Deletion
 	err = r.db.DB().QueryRow(ctx, query, args...).Scan(
 		&file.Id,
 		&file.Fullpath,
-		&file.Path,
-		&file.Filestem,
-		&file.Ext,
-		&file.ConvertTo,
 		&file.IsDone,
 		&file.IsCanceled,
 		&file.ErrorCode,
@@ -177,7 +161,7 @@ func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.MarkAsCompleted",
+		Name:     "repository.deletion_queue.MarkAsCompleted",
 		QueryRaw: sql,
 	}
 
@@ -202,7 +186,7 @@ func (r *repo) MarkAsCanceled(ctx context.Context, fullpath string, code uint32)
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.MarkAsCanceled",
+		Name:     "repository.deletion_queue.MarkAsCanceled",
 		QueryRaw: sql,
 	}
 

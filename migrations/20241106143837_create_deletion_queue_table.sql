@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS deletion_queue
 (
     id               BIGSERIAL PRIMARY KEY,
-    fullpath         VARCHAR(255) NOT NULL,
+    fullpath         VARCHAR(255) NOT NULL UNIQUE,
     is_done          BOOLEAN NOT NULL DEFAULT FALSE,
     is_canceled      BOOLEAN NOT NULL DEFAULT FALSE,
     error_code       INTEGER NOT NULL DEFAULT 0,

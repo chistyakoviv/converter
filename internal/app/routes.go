@@ -6,6 +6,7 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
+	"github.com/chistyakoviv/converter/internal/http-server/handlers/delete"
 )
 
 func initRoutes(ctx context.Context, c di.Container) {
@@ -20,6 +21,14 @@ func initRoutes(ctx context.Context, c di.Container) {
 		resolveLogger(c),
 		resolveValidator(c),
 		resolveConversionQueueService(c),
+		resolveTaskService(c),
+	))
+
+	router.Post("/delete", delete.New(
+		ctx,
+		resolveLogger(c),
+		resolveValidator(c),
+		resolveDeletionQueueService(c),
 		resolveTaskService(c),
 	))
 }

@@ -38,7 +38,7 @@ func (m *manager) transaction(ctx context.Context, opts pgx.TxOptions, fn db.TxH
 	// Put the transaction in the context.
 	ctx = pg.MakeContextTx(ctx, tx)
 
-	// Set up the defer function for the transaction to be rollbacked or commited.
+	// Set up the defer function for the transaction to be rolled back or committed.
 	defer func() {
 		// Recover from panic
 		if r := recover(); r != nil {
@@ -61,9 +61,9 @@ func (m *manager) transaction(ctx context.Context, opts pgx.TxOptions, fn db.TxH
 		}
 	}()
 
-	// Execute a user's handler.
-	// If the handler function returns an error, the transaction is rollbacked,
-	// otherwise the transaction is commited.
+	// Execute the user's handler.
+	// If the handler function returns an error, the transaction is rolled back;
+	// otherwise, the transaction is committed.
 	if err = fn(ctx); err != nil {
 		err = errors.Wrap(err, "failed executing code inside transaction")
 	}
