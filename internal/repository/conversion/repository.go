@@ -42,6 +42,7 @@ func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.Conversi
 }
 
 func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, error) {
+	ts := time.Now()
 	builder := r.sq.Insert(tablename).
 		Columns(
 			fullpathColumn,
@@ -49,6 +50,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			filestemColumn,
 			extColumn,
 			convertToColumn,
+			createdAtColumn,
 			updatedAtColumn,
 		).
 		Values(
@@ -57,7 +59,8 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			file.Filestem,
 			file.Ext,
 			file.ConvertTo,
-			time.Now(),
+			ts,
+			ts,
 		).
 		Suffix("RETURNING id")
 

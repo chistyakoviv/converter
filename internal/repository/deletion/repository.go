@@ -38,14 +38,17 @@ func NewRepository(db db.Client, sq sq.StatementBuilderType) repository.Deletion
 }
 
 func (r *repo) Create(ctx context.Context, file *model.DeletionInfo) (int64, error) {
+	ts := time.Now()
 	builder := r.sq.Insert(tablename).
 		Columns(
 			fullpathColumn,
+			createdAtColumn,
 			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
-			time.Now(),
+			ts,
+			ts,
 		).
 		Suffix("RETURNING id")
 
