@@ -2,16 +2,13 @@ package scan
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/chistyakoviv/converter/internal/constants"
 	loggerDecorator "github.com/chistyakoviv/converter/internal/http-server/decorators/logger"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
-	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/service"
-	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/render"
 )
 
@@ -27,9 +24,7 @@ func New(
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoratedLogger := loggerDecorator.LoggerDecorator("handlers.scan.New", logger, r)
 
-		err := taskService.ProcessScanfs(ctx, constants.FilesRootDir)
-
-		if errors.Is(err, task.ErrScanAlreadyRunning) {
+		if taskService.IsScanning() {
 			decoratedLogger.Debug("scan is already running")
 
 			render.Status(r, http.StatusConflict) // 409
@@ -37,19 +32,16 @@ func New(
 
 			return
 		}
-		if err != nil {
-			decoratedLogger.Error("failed to scan files", slogger.Err(err))
 
-			render.Status(r, http.StatusInternalServerError)
-			render.JSON(w, r, resp.Error("failed to scan files"))
+		// Do not wait for the scan to complete
+		go func() {
+			taskService.ProcessScanfs(ctx, constants.FilesRootDir)
 
-			return
-		}
+			decoratedLogger.Debug("scan completed")
 
-		decoratedLogger.Debug("scan completed")
-
-		// Try to process the files immediately
-		taskService.TryQueueConversion()
+			// Try to process the files immediately
+			taskService.TryQueueConversion()
+		}()
 
 		render.JSON(w, r, resp.OK())
 	}

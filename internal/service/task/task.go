@@ -168,6 +168,12 @@ func (s *serv) processDeletions(ctx context.Context) error {
 	}
 }
 
+func (s *serv) IsScanning() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.isScanning
+}
+
 func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
 	s.mu.Lock()
 	if s.isScanning {

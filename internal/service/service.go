@@ -26,6 +26,7 @@ type TaskService interface {
 	ProcessConversion(ctx context.Context)
 	ProcessDeletion(ctx context.Context)
 	ProcessScanfs(ctx context.Context, rootDir string) error
+	IsScanning() bool
 }
 
 type ConverterService interface {
