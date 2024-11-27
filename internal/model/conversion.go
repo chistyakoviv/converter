@@ -45,12 +45,14 @@ func (c *Conversion) AbsoluteDestinationPath(ext string, optionalPathPrefix ...s
 		if entry.Ext == ext {
 			// Sprintf is slightly slower, but more convenient here
 			dest := fmt.Sprintf("%s%s/%s", pathPrefix, c.Path, c.Filestem)
-			if value, ok := entry.Optional["replace_orig_ext"]; ok {
-				if replaceOrigExt, isReplaceOrigExtBool := value.(bool); isReplaceOrigExtBool {
-					if !replaceOrigExt {
-						dest = dest + "." + c.Ext
-					}
-				}
+			var hasReplaceOrigExt, isReplaceOrigExtBool, replaceOrigExt bool
+			var value interface{}
+			if value, hasReplaceOrigExt = entry.Optional["replace_orig_ext"]; hasReplaceOrigExt {
+				replaceOrigExt, isReplaceOrigExtBool = value.(bool)
+			}
+			if !hasReplaceOrigExt || !isReplaceOrigExtBool || !replaceOrigExt {
+				// Prepend the original extension
+				dest = dest + "." + c.Ext
 			}
 			return dest + "." + ext, nil
 		}
