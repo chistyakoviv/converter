@@ -3,6 +3,7 @@ package deletionq
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/chistyakoviv/converter/internal/config"
@@ -42,7 +43,7 @@ func (s *serv) Add(ctx context.Context, info *model.DeletionInfo) (int64, error)
 		_, errTx = s.deletionRepository.FindByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
 			if errTx == nil {
-				return ErrPathAlreadyExist
+				return fmt.Errorf("deletion failed for '%s': %w", info.Fullpath, ErrPathAlreadyExist)
 			}
 			return errTx
 		}

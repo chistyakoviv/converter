@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/chistyakoviv/converter/internal/file"
 )
 
 type Conversion struct {
@@ -115,4 +117,13 @@ func constructPathPrefix(optionalPathPrefix ...string) (string, error) {
 		pathPrefix = wd
 	}
 	return pathPrefix, nil
+}
+
+func ToConversionInfoFromFileInfo(finfo *file.FileInfo) *ConversionInfo {
+	return &ConversionInfo{
+		Fullpath: finfo.Fullpath,
+		Path:     finfo.Path,
+		Filestem: finfo.Filestem,
+		Ext:      finfo.Ext,
+	}
 }

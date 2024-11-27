@@ -7,6 +7,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/delete"
+	"github.com/chistyakoviv/converter/internal/http-server/handlers/scan"
 )
 
 func initRoutes(ctx context.Context, c di.Container) {
@@ -29,6 +30,12 @@ func initRoutes(ctx context.Context, c di.Container) {
 		resolveLogger(c),
 		resolveValidator(c),
 		resolveDeletionQueueService(c),
+		resolveTaskService(c),
+	))
+
+	router.Post("/scan", scan.New(
+		ctx,
+		resolveLogger(c),
 		resolveTaskService(c),
 	))
 }

@@ -84,7 +84,7 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		_, errTx = s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
 			if errTx == nil {
-				return ErrPathAlreadyExist
+				return fmt.Errorf("add failed for '%s': %w", info.Fullpath, ErrPathAlreadyExist)
 			}
 			return errTx
 		}

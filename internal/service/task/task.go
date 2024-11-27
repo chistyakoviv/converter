@@ -3,11 +3,17 @@ package task
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"sync"
 
 	"github.com/chistyakoviv/converter/internal/db"
+	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
+	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/chistyakoviv/converter/internal/service/converter"
@@ -22,6 +28,8 @@ type serv struct {
 	conversionRepository   repository.ConversionQueueRepository
 	conversionQueue        chan interface{}
 	deletionQueue          chan interface{}
+	mu                     sync.Mutex
+	isScanning             bool
 }
 
 func NewService(
@@ -158,4 +166,67 @@ func (s *serv) processDeletions(ctx context.Context) error {
 			return err
 		}
 	}
+}
+
+func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
+	s.mu.Lock()
+	if s.isScanning {
+		s.mu.Unlock()
+		return fmt.Errorf("another scan is already in progress: %w", ErrScanAlreadyRunning)
+	}
+
+	s.isScanning = true
+	s.mu.Unlock()
+
+	// Walk through the directory
+	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			s.logger.Error("Error accessing path", slogger.Err(err))
+			return nil
+		}
+
+		// Paths must start with "/"
+		path = file.MakePathRelative(path)
+
+		// Perform enqueuing if the file is not a directory
+		if !d.IsDir() {
+			s.logger.Debug("Try to enqueue file", slog.String("path", path))
+
+			imageOk, filetypeErr := file.IsImage(path)
+			if filetypeErr != nil {
+				s.logger.Error("failed to determine image type", slogger.Err(filetypeErr))
+				return nil
+			}
+			videoOk, filetypeErr := file.IsVideo(path)
+			if filetypeErr != nil {
+				s.logger.Error("failed to determine video type", slogger.Err(filetypeErr))
+				return nil
+			}
+
+			if imageOk || videoOk {
+				src, err := file.Trimwd(path)
+				if err != nil {
+					s.logger.Error("failed to trim working directory", slogger.Err(err))
+					return nil
+				}
+				finfo := file.ExtractInfo(src)
+				_, err = s.conversionQueueService.Add(ctx, model.ToConversionInfoFromFileInfo(finfo))
+				if err != nil {
+					s.logger.Error("failed to enqueue conversion while scanning filesystem", slogger.Err(err))
+				}
+			}
+		}
+
+		return nil
+	})
+
+	s.mu.Lock()
+	s.isScanning = false
+	s.mu.Unlock()
+
+	if err != nil {
+		return fmt.Errorf("failed to scan directory: %w", err)
+	}
+
+	return nil
 }
