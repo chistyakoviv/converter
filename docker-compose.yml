@@ -9,6 +9,7 @@ services:
     tty: true
     ports:
       - 80:8080 # http
+      - 6060:6060 # pprof metrics
     # environment:
       # - 'VIDEO_DEFAULT_FORMATS="[{"ext": "webm", optional": {"replace_orig_ext": true}, "conv_conf": {"c:v": "libvpx-vp9", "c:a": "libopus", "crf": "30", "b:a": "128k"}}]"'
 

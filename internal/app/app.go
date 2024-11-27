@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
+	// _ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -51,6 +53,35 @@ func (a *app) Run(ctx context.Context) {
 	logger.Debug("Application is running in DEBUG mode")
 
 	initRoutes(ctx, a.container)
+
+	// ecex the command to empty the memory buffer: echo 3 | sudo tee /proc/sys/vm/drop_caches
+	// see https://medium.com/@bobzsj87/demist-the-memory-ghost-d6b7cf45dd2a
+	// pprof
+	// if cfg.Env == config.EnvLocal {
+	// 	go func() {
+	// 		logger.Info("pprof server started")
+	// 		http.ListenAndServe("0.0.0.0:6060", nil)
+	// 	}()
+	// }
+
+	// runtime stats
+	// go func() {
+	// 	printRuntimeStats := func() {
+	// 		var memStats runtime.MemStats
+	// 		runtime.ReadMemStats(&memStats)
+	// 		fmt.Printf("Heap Alloc = %v KB\n", memStats.HeapAlloc/1024)
+	// 		fmt.Printf("Heap Sys = %v KB\n", memStats.HeapSys/1024)
+	// 		fmt.Printf("Heap Idle = %v KB\n", memStats.HeapIdle/1024)
+	// 		fmt.Printf("Heap Released = %v KB\n", memStats.HeapReleased/1024)
+	// 		fmt.Printf("Total Alloc = %v KB\n", memStats.TotalAlloc/1024)
+	// 		fmt.Printf("Sys = %v KB\n", memStats.Sys/1024)
+	// 	}
+	// 	ticker := time.NewTicker(15 * time.Second)
+	// 	defer ticker.Stop()
+	// 	for range ticker.C {
+	// 		printRuntimeStats()
+	// 	}
+	// }()
 
 	// http server
 	go func() {
