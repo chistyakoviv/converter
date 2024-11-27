@@ -15,10 +15,12 @@ CREATE TABLE IF NOT EXISTS conversion_queue
     updated_at       TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS conversion_queue_fullpath_idx ON conversion_queue (fullpath);
+CREATE INDEX IF NOT EXISTS conversion_queue_filestem_idx ON conversion_queue (filestem);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 DROP INDEX IF EXISTS conversion_queue_fullpath_idx;
+DROP INDEX IF EXISTS conversion_queue_filestem_idx;
 DROP TABLE IF EXISTS conversion_queue;
 -- +goose StatementEnd
