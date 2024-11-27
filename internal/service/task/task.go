@@ -28,7 +28,7 @@ type serv struct {
 	conversionRepository   repository.ConversionQueueRepository
 	conversionQueue        chan interface{}
 	deletionQueue          chan interface{}
-	mu                     sync.Mutex
+	mu                     sync.RWMutex
 	isScanning             bool
 }
 
@@ -169,8 +169,8 @@ func (s *serv) processDeletions(ctx context.Context) error {
 }
 
 func (s *serv) IsScanning() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.isScanning
 }
 
