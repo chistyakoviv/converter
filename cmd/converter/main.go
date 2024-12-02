@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 
-	"github.com/chistyakoviv/converter/internal/app"
+	"github.com/chistyakoviv/converter/app"
 )
 
 func main() {
 	ctx := context.Background()
-	app := app.NewApp(ctx)
-	app.Run(ctx)
+	a := app.NewApp(ctx)
+	a.Run(ctx)
 }
