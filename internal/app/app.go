@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 )
@@ -54,15 +55,15 @@ func (a *app) Run(ctx context.Context) {
 
 	initRoutes(ctx, a.container)
 
-	// ecex the command to empty the memory buffer: echo 3 | sudo tee /proc/sys/vm/drop_caches
+	// Exec the command to empty the memory buffer: echo 3 | sudo tee /proc/sys/vm/drop_caches
 	// see https://medium.com/@bobzsj87/demist-the-memory-ghost-d6b7cf45dd2a
 	// pprof
-	// if cfg.Env == config.EnvLocal {
-	// 	go func() {
-	// 		logger.Info("pprof server started")
-	// 		http.ListenAndServe("0.0.0.0:6060", nil)
-	// 	}()
-	// }
+	if cfg.Env == config.EnvLocal {
+		go func() {
+			logger.Info("pprof server started")
+			http.ListenAndServe("0.0.0.0:6060", nil)
+		}()
+	}
 
 	// runtime stats
 	// go func() {
