@@ -16,17 +16,16 @@ import (
 const (
 	tablename = "conversion_queue"
 
-	idColumn         = "id"
-	fullpathColumn   = "fullpath"
-	pathColumn       = "path"
-	filestemColumn   = "filestem"
-	extColumn        = "ext"
-	convertToColumn  = "convert_to"
-	isDoneColumn     = "is_done"
-	isCanceledColumn = "is_canceled"
-	errorCodeColumn  = "error_code"
-	createdAtColumn  = "created_at"
-	updatedAtColumn  = "updated_at"
+	idColumn        = "id"
+	fullpathColumn  = "fullpath"
+	pathColumn      = "path"
+	filestemColumn  = "filestem"
+	extColumn       = "ext"
+	convertToColumn = "convert_to"
+	statusColumn    = "status"
+	errorCodeColumn = "error_code"
+	createdAtColumn = "created_at"
+	updatedAtColumn = "updated_at"
 )
 
 type repo struct {
@@ -104,8 +103,7 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 		&file.Filestem,
 		&file.Ext,
 		&file.ConvertTo,
-		&file.IsDone,
-		&file.IsCanceled,
+		&file.Status,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -141,8 +139,7 @@ func (r *repo) FindByFilestem(ctx context.Context, filestem string) (*model.Conv
 		&file.Filestem,
 		&file.Ext,
 		&file.ConvertTo,
-		&file.IsDone,
-		&file.IsCanceled,
+		&file.Status,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -163,10 +160,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 		From(tablename).
 		OrderBy(fmt.Sprintf("%s DESC", updatedAtColumn)).
 		Where(
-			sq.And{
-				sq.Eq{isDoneColumn: false},
-				sq.Eq{isCanceledColumn: false},
-			},
+			sq.Eq{statusColumn: model.ConversionStatusPending},
 		).
 		Limit(1)
 
@@ -188,8 +182,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 		&file.Filestem,
 		&file.Ext,
 		&file.ConvertTo,
-		&file.IsDone,
-		&file.IsCanceled,
+		&file.Status,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -204,10 +197,10 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 	return &file, nil
 }
 
-func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
+func (r *repo) MarkAsDone(ctx context.Context, fullpath string) error {
 	builder := r.sq.
 		Update(tablename).
-		Set(isDoneColumn, true).
+		Set(statusColumn, model.ConversionStatusDone).
 		Set(updatedAtColumn, time.Now()).
 		Where(sq.Eq{fullpathColumn: fullpath})
 
@@ -217,7 +210,7 @@ func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
 	}
 
 	query := db.Query{
-		Name:     "repository.conversion_queue.MarkAsCompleted",
+		Name:     "repository.conversion_queue.MarkAsDone",
 		QueryRaw: sql,
 	}
 
@@ -231,7 +224,7 @@ func (r *repo) MarkAsCompleted(ctx context.Context, fullpath string) error {
 func (r *repo) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {
 	builder := r.sq.
 		Update(tablename).
-		Set(isCanceledColumn, true).
+		Set(statusColumn, model.ConversionStatusCanceled).
 		Set(updatedAtColumn, time.Now()).
 		Set(errorCodeColumn, code).
 		Where(sq.Eq{fullpathColumn: fullpath})

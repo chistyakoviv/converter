@@ -2,14 +2,13 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS conversion_queue
 (
-    id               BIGSERIAL PRIMARY KEY,
+    id               SERIAL PRIMARY KEY,
     fullpath         VARCHAR(255) NOT NULL UNIQUE, -- Ensure fullpath is unique so the deletion operation can use 'convert_to' to identify files to delete.
     path             VARCHAR(255) NOT NULL,
     filestem         VARCHAR(255) NOT NULL UNIQUE, -- Filename without extension (i. e. /path/to/photo.ext -> photo)
     ext              VARCHAR(255) NOT NULL,
     convert_to       JSONB NOT NULL,
-    is_done          BOOLEAN NOT NULL DEFAULT FALSE,
-    is_canceled      BOOLEAN NOT NULL DEFAULT FALSE,
+    status           SMALLINT NOT NULL DEFAULT 0,
     error_code       INTEGER NOT NULL DEFAULT 0,
     created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMP

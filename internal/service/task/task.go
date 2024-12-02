@@ -105,7 +105,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 			continue
 		}
 
-		err = s.conversionQueueService.MarkAsCompleted(ctx, fileInfo.Fullpath)
+		err = s.conversionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
 		if err != nil {
 			logger.Error("failed to mark as completed", slogger.Err(err))
 			return err
@@ -160,7 +160,7 @@ func (s *serv) processDeletions(ctx context.Context) error {
 			continue
 		}
 
-		err = s.deletionQueueService.MarkAsCompleted(ctx, fileInfo.Fullpath)
+		err = s.deletionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
 		if err != nil {
 			logger.Error("failed to mark as completed", slogger.Err(err))
 			return err

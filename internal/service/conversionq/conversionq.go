@@ -113,8 +113,8 @@ func (s *serv) Pop(ctx context.Context) (*model.Conversion, error) {
 	return s.conversionRepository.FindOldestQueued(ctx)
 }
 
-func (s *serv) MarkAsCompleted(ctx context.Context, fullpath string) error {
-	return s.conversionRepository.MarkAsCompleted(ctx, fullpath)
+func (s *serv) MarkAsDone(ctx context.Context, fullpath string) error {
+	return s.conversionRepository.MarkAsDone(ctx, fullpath)
 }
 
 func (s *serv) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {

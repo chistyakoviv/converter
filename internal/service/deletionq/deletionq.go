@@ -63,8 +63,8 @@ func (s *serv) Pop(ctx context.Context) (*model.Deletion, error) {
 	return s.deletionRepository.FindOldestQueued(ctx)
 }
 
-func (s *serv) MarkAsCompleted(ctx context.Context, fullpath string) error {
-	return s.deletionRepository.MarkAsCompleted(ctx, fullpath)
+func (s *serv) MarkAsDone(ctx context.Context, fullpath string) error {
+	return s.deletionRepository.MarkAsDone(ctx, fullpath)
 }
 
 func (s *serv) MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error {

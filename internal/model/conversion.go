@@ -10,18 +10,35 @@ import (
 	"github.com/chistyakoviv/converter/internal/file"
 )
 
+const (
+	ConversionStatusPending  = 0
+	ConversionStatusDone     = 1
+	ConversionStatusCanceled = 2
+)
+
 type Conversion struct {
-	Id         int64
-	Fullpath   string
-	Path       string
-	Filestem   string
-	Ext        string
-	ConvertTo  []ConvertTo
-	IsDone     bool
-	IsCanceled bool
-	ErrorCode  int
-	CreatedAt  time.Time
-	UpdatedAt  sql.NullTime
+	Id        int64
+	Fullpath  string
+	Path      string
+	Filestem  string
+	Ext       string
+	ConvertTo []ConvertTo
+	Status    int
+	ErrorCode int
+	CreatedAt time.Time
+	UpdatedAt sql.NullTime
+}
+
+func (c *Conversion) IsDone() bool {
+	return c.Status == ConversionStatusDone
+}
+
+func (c *Conversion) IsCanceled() bool {
+	return c.Status == ConversionStatusCanceled
+}
+
+func (c *Conversion) IsPending() bool {
+	return c.Status == ConversionStatusPending
 }
 
 // Go does not support optional parameters, so use a variadic parameter instead.
