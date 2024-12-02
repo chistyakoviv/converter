@@ -192,7 +192,7 @@ func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
 		}
 
 		// Paths must start with "/"
-		path = file.MakePathRelative(path)
+		path = file.EnsureLeadingSlash(path)
 
 		// Perform enqueuing if the file is not a directory
 		if !d.IsDir() {

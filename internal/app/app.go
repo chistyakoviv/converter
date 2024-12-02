@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/di"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 )
@@ -58,31 +57,12 @@ func (a *app) Run(ctx context.Context) {
 	// Exec the command to empty the memory buffer: echo 3 | sudo tee /proc/sys/vm/drop_caches
 	// see https://medium.com/@bobzsj87/demist-the-memory-ghost-d6b7cf45dd2a
 	// pprof
-	if cfg.Env == config.EnvLocal {
-		go func() {
-			logger.Info("pprof server started")
-			http.ListenAndServe("0.0.0.0:6060", nil)
-		}()
-	}
-
-	// runtime stats
-	// go func() {
-	// 	printRuntimeStats := func() {
-	// 		var memStats runtime.MemStats
-	// 		runtime.ReadMemStats(&memStats)
-	// 		fmt.Printf("Heap Alloc = %v KB\n", memStats.HeapAlloc/1024)
-	// 		fmt.Printf("Heap Sys = %v KB\n", memStats.HeapSys/1024)
-	// 		fmt.Printf("Heap Idle = %v KB\n", memStats.HeapIdle/1024)
-	// 		fmt.Printf("Heap Released = %v KB\n", memStats.HeapReleased/1024)
-	// 		fmt.Printf("Total Alloc = %v KB\n", memStats.TotalAlloc/1024)
-	// 		fmt.Printf("Sys = %v KB\n", memStats.Sys/1024)
-	// 	}
-	// 	ticker := time.NewTicker(15 * time.Second)
-	// 	defer ticker.Stop()
-	// 	for range ticker.C {
-	// 		printRuntimeStats()
-	// 	}
-	// }()
+	// if cfg.Env == config.EnvLocal {
+	// 	go func() {
+	// 		logger.Info("pprof server started")
+	// 		http.ListenAndServe("0.0.0.0:6060", nil)
+	// 	}()
+	// }
 
 	// http server
 	go func() {

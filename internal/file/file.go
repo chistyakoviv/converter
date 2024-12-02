@@ -22,7 +22,7 @@ func Trimwd(src string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return MakePathRelative(strings.TrimPrefix(src, wd)), nil
+	return EnsureLeadingSlash(strings.TrimPrefix(src, wd)), nil
 }
 
 type FileInfo struct {
@@ -47,7 +47,7 @@ func ExtractInfo(src string) *FileInfo {
 	}
 }
 
-func MakePathRelative(src string) string {
+func EnsureLeadingSlash(src string) string {
 	if !strings.HasPrefix(src, "/") {
 		return fmt.Sprintf("/%s", src)
 	}
