@@ -89,11 +89,22 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 		return wrapError(err)
 	}
 
-	err = os.WriteFile(to, image1bytes, 0644)
+	tmpFile := to + ".tmp"
+
+	err = os.WriteFile(tmpFile, image1bytes, 0644)
 	if err != nil {
 		logger.Error("error:", slogger.Err(err))
 		return wrapError(err)
 	}
+
+	if err := os.Remove(to); err != nil && !os.IsNotExist(err) {
+		return wrapError(fmt.Errorf("failed to remove old file: %w", err))
+	}
+
+	if err := os.Rename(tmpFile, to); err != nil {
+		return wrapError(fmt.Errorf("failed to rename tmp file: %w", err))
+	}
+
 	return nil
 }
 
