@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	filePersmission = 0644
+	filePermissions = 0644
 )
 
 type conv struct {
@@ -147,7 +147,7 @@ func (c *conv) toJpeg(from string, to string, conf converter.ConversionConfig) e
 		return err
 	}
 
-	err = os.WriteFile(to, imageBytes, filePersmission)
+	err = os.WriteFile(to, imageBytes, filePermissions)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (c *conv) toPng(from string, to string, conf converter.ConversionConfig) er
 		return err
 	}
 
-	err = os.WriteFile(to, imageBytes, filePersmission)
+	err = os.WriteFile(to, imageBytes, filePermissions)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (c *conv) toWebp(from string, to string, conf converter.ConversionConfig) e
 		return err
 	}
 
-	err = os.WriteFile(to, imageBytes, filePersmission)
+	err = os.WriteFile(to, imageBytes, filePermissions)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func (c *conv) toAvif(from string, to string, conf converter.ConversionConfig) e
 		return err
 	}
 
-	err = os.WriteFile(to, imageBytes, filePersmission)
+	err = os.WriteFile(to, imageBytes, filePermissions)
 	if err != nil {
 		return err
 	}
