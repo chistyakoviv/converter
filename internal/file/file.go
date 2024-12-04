@@ -63,3 +63,7 @@ func ToTmpFilePath(src string) string {
 
 	return fmt.Sprintf("%s.tmp%s", path, fileExt)
 }
+
+func Ext(src string) string {
+	return strings.ToLower(strings.TrimPrefix(filepath.Ext(src), "."))
+}

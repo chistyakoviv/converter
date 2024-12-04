@@ -12,6 +12,10 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
+const (
+	filePersmission = 0644
+)
+
 type conv struct {
 	logger *slog.Logger
 }
@@ -86,26 +90,37 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 	const op = "govips.Convert"
 
 	logger := c.logger.With(slog.String("op", op))
-
-	image1, err := vips.NewImageFromFile(from)
-	if err != nil {
-		logger.Error("error:", slogger.Err(err))
-		return wrapError(err)
-	}
-
-	ep := vips.NewDefaultWEBPExportParams()
-	image1bytes, _, err := image1.Export(ep)
-	if err != nil {
-		logger.Error("error:", slogger.Err(err))
-		return wrapError(err)
-	}
+	ext := file.Ext(to)
 
 	tmpFile := file.ToTmpFilePath(to)
 
-	err = os.WriteFile(tmpFile, image1bytes, 0644)
-	if err != nil {
-		logger.Error("error:", slogger.Err(err))
-		return wrapError(err)
+	switch ext {
+	case "jpg", "jpeg":
+		err := c.toJpeg(from, tmpFile, conf)
+		if err != nil {
+			logger.Error("error:", slogger.Err(err))
+			return wrapError(err)
+		}
+	case "png":
+		err := c.toPng(from, tmpFile, conf)
+		if err != nil {
+			logger.Error("error:", slogger.Err(err))
+			return wrapError(err)
+		}
+	case "webp":
+		err := c.toWebp(from, tmpFile, conf)
+		if err != nil {
+			logger.Error("error:", slogger.Err(err))
+			return wrapError(err)
+		}
+	case "avif":
+		err := c.toAvif(from, tmpFile, conf)
+		if err != nil {
+			logger.Error("error:", slogger.Err(err))
+			return wrapError(err)
+		}
+	default:
+		return wrapError(fmt.Errorf("unsupported format: %s", ext))
 	}
 
 	if err := os.Remove(to); err != nil && !os.IsNotExist(err) {
@@ -114,6 +129,90 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 
 	if err := os.Rename(tmpFile, to); err != nil {
 		return wrapError(fmt.Errorf("failed to rename tmp file: %w", err))
+	}
+
+	return nil
+}
+
+func (c *conv) toJpeg(from string, to string, conf converter.ConversionConfig) error {
+	image, err := vips.NewImageFromFile(from)
+	if err != nil {
+		return err
+	}
+
+	ep := vips.NewJpegExportParams()
+
+	imageBytes, _, err := image.ExportJpeg(ep)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(to, imageBytes, filePersmission)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *conv) toPng(from string, to string, conf converter.ConversionConfig) error {
+	image, err := vips.NewImageFromFile(from)
+	if err != nil {
+		return err
+	}
+
+	ep := vips.NewPngExportParams()
+
+	imageBytes, _, err := image.ExportPng(ep)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(to, imageBytes, filePersmission)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *conv) toWebp(from string, to string, conf converter.ConversionConfig) error {
+	image, err := vips.NewImageFromFile(from)
+	if err != nil {
+		return err
+	}
+
+	ep := vips.NewWebpExportParams()
+
+	imageBytes, _, err := image.ExportWebp(ep)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(to, imageBytes, filePersmission)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *conv) toAvif(from string, to string, conf converter.ConversionConfig) error {
+	image, err := vips.NewImageFromFile(from)
+	if err != nil {
+		return err
+	}
+
+	ep := vips.NewAvifExportParams()
+
+	imageBytes, _, err := image.ExportAvif(ep)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(to, imageBytes, filePersmission)
+	if err != nil {
+		return err
 	}
 
 	return nil
