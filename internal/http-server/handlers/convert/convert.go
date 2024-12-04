@@ -41,11 +41,43 @@ func New(
 		}
 
 		id, err := conversionService.Add(ctx, converter.ToConversionInfoFromRequest(req))
-		if errors.Is(err, conversionq.ErrPathAlreadyExist) {
-			decoratedLogger.Debug("file with the specified path already exists", slog.String("path", req.Path))
+		if errors.Is(err, conversionq.ErrPathAlreadyExist) || errors.Is(err, conversionq.ErrFilestemAlreadyExist) {
+			decoratedLogger.Debug("file with the specified path or filestem already exists", slog.String("path", req.Path))
 
 			render.Status(r, http.StatusConflict) // 409
 			render.JSON(w, r, resp.Error("file with the specified path already exists"))
+
+			return
+		}
+		if errors.Is(err, conversionq.ErrFileDoesNotExist) {
+			decoratedLogger.Debug("file does not exist", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusBadRequest) // 400 (404?)
+			render.JSON(w, r, resp.Error("file does not exist"))
+
+			return
+		}
+		if errors.Is(err, conversionq.ErrFileTypeNotSupported) {
+			decoratedLogger.Debug("file type not supported", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusBadRequest) // 400
+			render.JSON(w, r, resp.Error("file type not supported"))
+
+			return
+		}
+		if errors.Is(err, conversionq.ErrFailedDetermineFileType) {
+			decoratedLogger.Debug("failed to determine file type", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusUnprocessableEntity) // 422
+			render.JSON(w, r, resp.Error("failed to determine file type"))
+
+			return
+		}
+		if errors.Is(err, conversionq.ErrInvalidConversion) {
+			decoratedLogger.Debug("cannot convert to the specified format", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusBadRequest) // 400
+			render.JSON(w, r, resp.Error("cannot convert to the specified format"))
 
 			return
 		}

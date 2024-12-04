@@ -38,10 +38,10 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		return -1, err
 	}
 	if !file.Exists(src) {
-		return -1, fmt.Errorf("file '%s' does not exist", info.Fullpath)
+		return -1, fmt.Errorf("%s: %w", info.Fullpath, ErrFileDoesNotExist)
 	}
 	if !isSupported(info.Ext) {
-		return -1, fmt.Errorf("file type '%s' not supported", info.Ext)
+		return -1, fmt.Errorf("%s: %w", info.Ext, ErrFileTypeNotSupported)
 	}
 
 	// Assign default format if no target formats are specified
@@ -53,13 +53,13 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 			info.ConvertTo = s.cfg.Image.DefaultFormats
 		}
 		if err != nil {
-			return -1, fmt.Errorf("failed to determine file type: %w", err)
+			return -1, fmt.Errorf("%w: %w", ErrFailedDetermineFileType, err)
 		}
 		if ok, err = file.IsVideo(info.Fullpath); ok {
 			info.ConvertTo = s.cfg.Video.DefaultFormats
 		}
 		if err != nil {
-			return -1, fmt.Errorf("failed to determine file type: %w", err)
+			return -1, fmt.Errorf("%w: %w", ErrFailedDetermineFileType, err)
 		}
 	} else {
 		var unsupportedFormats []string
@@ -69,7 +69,7 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 			}
 		}
 		if len(unsupportedFormats) > 0 {
-			return -1, fmt.Errorf("file type '%s' is not convertible to %s", info.Ext, strings.Join(unsupportedFormats, ", "))
+			return -1, fmt.Errorf("conversion from '%s' to %s: %w", info.Ext, strings.Join(unsupportedFormats, ", "), ErrInvalidConversion)
 		}
 	}
 
