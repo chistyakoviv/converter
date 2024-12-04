@@ -52,11 +52,13 @@ func (c *conf) Convert(from string, to string, conf converter.ConversionConfig) 
 	}
 
 	if err := os.Remove(to); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove old file: %w", err)
+		logger.Error("failed to remove old file", slog.String("path", to), slogger.Err(err))
+		return fmt.Errorf("failed to remove old file '%s': %w", to, err)
 	}
 
 	if err := os.Rename(tmpFile, to); err != nil {
-		return fmt.Errorf("failed to rename tmp file: %w", err)
+		logger.Error("failed to rename tmp file", slog.String("from", tmpFile), slog.String("to", to), slogger.Err(err))
+		return fmt.Errorf("failed to rename tmp file '%s' to '%s': %w", tmpFile, to, err)
 	}
 
 	return nil
