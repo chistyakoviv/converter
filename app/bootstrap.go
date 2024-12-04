@@ -58,6 +58,10 @@ func bootstrap(ctx context.Context, c di.Container) {
 			)
 		}
 
+		logger = logger.With(
+			slog.String("service", "converter"),
+		)
+
 		return logger
 	})
 
