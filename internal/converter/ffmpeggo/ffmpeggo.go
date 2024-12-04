@@ -7,6 +7,7 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
+	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
@@ -37,7 +38,7 @@ func (c *conf) Convert(from string, to string, conf converter.ConversionConfig) 
 
 	args["threads"] = c.cfg.Video.Threads
 
-	tmpFile := to + ".tmp"
+	tmpFile := file.ToTmpFilePath(to)
 
 	// Build and run the FFmpeg command
 	err := ffmpeg.Input(from).

@@ -13,6 +13,7 @@ func Exists(filePath string) bool {
 	if os.IsNotExist(err) {
 		return false
 	}
+
 	// If there's no error or a different kind of error, the file might exist
 	return err == nil
 }
@@ -22,6 +23,7 @@ func Trimwd(src string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return EnsureLeadingSlash(strings.TrimPrefix(src, wd)), nil
 }
 
@@ -51,5 +53,13 @@ func EnsureLeadingSlash(src string) string {
 	if !strings.HasPrefix(src, "/") {
 		return fmt.Sprintf("/%s", src)
 	}
+
 	return src
+}
+
+func ToTmpFilePath(src string) string {
+	fileExt := filepath.Ext(src)
+	path := strings.TrimSuffix(src, fileExt)
+
+	return fmt.Sprintf("%s.tmp%s", path, fileExt)
 }

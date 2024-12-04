@@ -7,6 +7,7 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
+	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -64,6 +65,16 @@ func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageC
 	}
 
 	vips.LoggingSettings(vipsLogger, logLevel)
+	// See config example https://github.com/davidbyttow/govips/blob/master/examples/image/bench_test.go
+	// conf := &vips.Config{
+	// 	ConcurrencyLevel: 0,
+	// 	MaxCacheFiles:    0,
+	// 	MaxCacheMem:      0,
+	// 	MaxCacheSize:     0,
+	// 	ReportLeaks:      false,
+	// 	CacheTrace:       false,
+	// 	CollectStats:     false,
+	// }
 	vips.Startup(nil)
 
 	return &conv{
@@ -89,7 +100,7 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 		return wrapError(err)
 	}
 
-	tmpFile := to + ".tmp"
+	tmpFile := file.ToTmpFilePath(to)
 
 	err = os.WriteFile(tmpFile, image1bytes, 0644)
 	if err != nil {
