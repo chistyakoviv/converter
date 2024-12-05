@@ -7,7 +7,7 @@ database:
   # host: "converter-pg"
   # port: "5432"
 http_server:
-  address: "0.0.0.0:8080"
+  address: "0.0.0.0:80"
   read_timeout: 4s
   write_timeout: 4s
   idle_timeout: 60s
@@ -24,6 +24,5 @@ video:
       conv_conf:
         c:v: "libvpx-vp9"
         c:a: "libopus"
-        b:v: "1M"
-        b:a: "128k"
+        crf: "40"
   threads: 4
