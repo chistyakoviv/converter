@@ -8,6 +8,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/file"
+	"github.com/chistyakoviv/converter/internal/lib/mapper"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -142,6 +143,8 @@ func (c *conv) toJpeg(from string, to string, conf converter.ConversionConfig) e
 
 	ep := vips.NewJpegExportParams()
 
+	mapper.MapToStruct(conf, ep)
+
 	imageBytes, _, err := image.ExportJpeg(ep)
 	if err != nil {
 		return err
@@ -162,6 +165,8 @@ func (c *conv) toPng(from string, to string, conf converter.ConversionConfig) er
 	}
 
 	ep := vips.NewPngExportParams()
+
+	mapper.MapToStruct(conf, ep)
 
 	imageBytes, _, err := image.ExportPng(ep)
 	if err != nil {
@@ -184,6 +189,8 @@ func (c *conv) toWebp(from string, to string, conf converter.ConversionConfig) e
 
 	ep := vips.NewWebpExportParams()
 
+	mapper.MapToStruct(conf, ep)
+
 	imageBytes, _, err := image.ExportWebp(ep)
 	if err != nil {
 		return err
@@ -204,6 +211,8 @@ func (c *conv) toAvif(from string, to string, conf converter.ConversionConfig) e
 	}
 
 	ep := vips.NewAvifExportParams()
+
+	mapper.MapToStruct(conf, ep)
 
 	imageBytes, _, err := image.ExportAvif(ep)
 	if err != nil {
