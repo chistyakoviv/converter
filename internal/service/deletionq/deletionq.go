@@ -36,6 +36,7 @@ func NewService(
 }
 
 func (s *serv) Add(ctx context.Context, info *model.DeletionInfo) (int64, error) {
+	// Skip checking if the file exists, as the source file might already be deleted when attempting removal.
 	var id int64
 
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {

@@ -136,6 +136,11 @@ func (s *serv) processDeletions(ctx context.Context) error {
 
 		fileInfo, err := s.conversionRepository.FindByFullpath(ctx, file.Fullpath)
 		if err != nil {
+			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
+			if err != nil {
+				logger.Error("failed to mark as canceled", slogger.Err(err))
+				return err
+			}
 			return err
 		}
 		var removeErrs []error
@@ -152,7 +157,7 @@ func (s *serv) processDeletions(ctx context.Context) error {
 		if len(removeErrs) > 0 {
 			// Do not return an error, just mark as canceled
 			logger.Error("Failed to remove files", slogger.GroupErr(removeErrs))
-			err = s.deletionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, deletionq.ErrFailedToRemoveFile)
+			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
 			if err != nil {
 				logger.Error("failed to mark as canceled", slogger.Err(err))
 				return err
