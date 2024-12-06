@@ -57,7 +57,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 	}
 
 	for _, entry := range info.ConvertTo {
-		dest, err := info.AbsoluteDestinationPath(entry.Ext)
+		dest, err := info.AbsoluteDestinationPath(entry)
 		if err != nil {
 			return NewConversionError(err.Error(), ErrUnableToConvertFile)
 		}

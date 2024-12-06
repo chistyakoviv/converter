@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -41,7 +40,8 @@ func (c *Conversion) IsPending() bool {
 	return c.Status == ConversionStatusPending
 }
 
-// Go does not support optional parameters, so use a variadic parameter instead.
+// Since Go does not support optional parameters, a variadic parameter is used instead.
+// If optionalPathPrefix is not provided or empty, the default path prefix will be the working directory.
 func (c *Conversion) AbsoluteSourcePath(optionalPathPrefix ...string) (string, error) {
 	pathPrefix, err := constructPathPrefix(optionalPathPrefix...)
 	if err != nil {
@@ -50,31 +50,39 @@ func (c *Conversion) AbsoluteSourcePath(optionalPathPrefix ...string) (string, e
 	return pathPrefix + c.Fullpath, nil
 }
 
-func (c *Conversion) AbsoluteDestinationPath(ext string, optionalPathPrefix ...string) (string, error) {
+// Since Go does not support optional parameters, a variadic parameter is used instead.
+// If optionalPathPrefix is not provided or empty, the default path prefix will be the working directory.
+func (c *Conversion) AbsoluteDestinationPath(entry ConvertTo, optionalPathPrefix ...string) (string, error) {
 	pathPrefix, err := constructPathPrefix(optionalPathPrefix...)
 	if err != nil {
 		return "", err
 	}
-	// No optimization is necessary here, as the number of entries is small.
-	// On the first call, precalculate the output and store the results in a map
-	// if future optimizations are needed.
-	for _, entry := range c.ConvertTo {
-		if entry.Ext == ext {
-			// Sprintf is slightly slower, but more convenient here
-			dest := fmt.Sprintf("%s%s/%s", pathPrefix, c.Path, c.Filestem)
-			var hasReplaceOrigExt, isReplaceOrigExtBool, replaceOrigExt bool
-			var value interface{}
-			if value, hasReplaceOrigExt = entry.Optional["replace_orig_ext"]; hasReplaceOrigExt {
-				replaceOrigExt, isReplaceOrigExtBool = value.(bool)
-			}
-			if !hasReplaceOrigExt || !isReplaceOrigExtBool || !replaceOrigExt {
-				// Prepend the original extension
-				dest = dest + "." + c.Ext
-			}
-			return dest + "." + ext, nil
-		}
+
+	dest := fmt.Sprintf("%s%s/%s", pathPrefix, c.Path, c.Filestem)
+
+	// Preserve the original extension if specified
+	var hasReplaceOrigExt, isReplaceOrigExtBool, replaceOrigExt bool
+	var replaceOrigExtValue interface{}
+	if replaceOrigExtValue, hasReplaceOrigExt = entry.Optional["replace_orig_ext"]; hasReplaceOrigExt {
+		replaceOrigExt, isReplaceOrigExtBool = replaceOrigExtValue.(bool)
 	}
-	return "", errors.New("conversion entry not found")
+	if !hasReplaceOrigExt || !isReplaceOrigExtBool || !replaceOrigExt {
+		// Append the original extension
+		dest = dest + "." + c.Ext
+	}
+
+	// Add suffix if specified
+	var hasSuffix, isSuffixStr bool
+	var suffix string
+	var suffixValue interface{}
+	if suffixValue, hasSuffix = entry.Optional["suffix"]; hasSuffix {
+		suffix, isSuffixStr = suffixValue.(string)
+	}
+	if hasSuffix && isSuffixStr {
+		dest = dest + suffix
+	}
+
+	return dest + "." + entry.Ext, nil
 }
 
 type ConversionInfo struct {

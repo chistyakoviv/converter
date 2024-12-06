@@ -152,11 +152,12 @@ func (s *serv) processDeletion(ctx context.Context) error {
 		}
 		var removeErrs []error
 		for _, entry := range fileInfo.ConvertTo {
-			dest, err := fileInfo.AbsoluteDestinationPath(entry.Ext)
+			dest, err := fileInfo.AbsoluteDestinationPath(entry)
 			if err != nil {
 				return err
 			}
-			if err := os.Remove(dest); err != nil {
+			// The absence of a file is not considered an error.
+			if err := os.Remove(dest); err != nil && !os.IsNotExist(err) {
 				removeErrs = append(removeErrs, err)
 			}
 		}
