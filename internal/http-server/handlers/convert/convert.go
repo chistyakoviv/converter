@@ -52,7 +52,7 @@ func New(
 		if errors.Is(err, conversionq.ErrFileDoesNotExist) {
 			decoratedLogger.Debug("file does not exist", slog.String("path", req.Path))
 
-			render.Status(r, http.StatusBadRequest) // 400 (404?)
+			render.Status(r, http.StatusNotFound) // 404
 			render.JSON(w, r, resp.Error("file does not exist"))
 
 			return

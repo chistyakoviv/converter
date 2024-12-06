@@ -26,12 +26,14 @@ func NewService(
 	logger *slog.Logger,
 	txManager db.TxManager,
 	deletionRepository repository.DeletionQueueRepository,
+	conversionRepository repository.ConversionQueueRepository,
 ) service.DeletionQueueService {
 	return &serv{
-		cfg:                cfg,
-		logger:             logger,
-		txManager:          txManager,
-		deletionRepository: deletionRepository,
+		cfg:                  cfg,
+		logger:               logger,
+		txManager:            txManager,
+		deletionRepository:   deletionRepository,
+		conversionRepository: conversionRepository,
 	}
 }
 
@@ -40,13 +42,21 @@ func (s *serv) Add(ctx context.Context, info *model.DeletionInfo) (int64, error)
 	var id int64
 
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		// TODO: Verify the matching file in the addition queue and return a 404 response if not found.
 		var errTx error
+		_, errTx = s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
+		if errors.Is(errTx, db.ErrNotFound) {
+			return fmt.Errorf("deletion failed for '%s': %w", info.Fullpath, ErrFileDoesNotExist)
+		}
+		if errTx != nil {
+			return errTx
+		}
 		_, errTx = s.deletionRepository.FindByFullpath(ctx, info.Fullpath)
+		// Return an error if the file is found (== nil) in the deletion queue
+		if errTx == nil {
+			return fmt.Errorf("deletion failed for '%s': %w", info.Fullpath, ErrPathAlreadyExist)
+		}
+		// Return an error if it is not the NotFound error
 		if !errors.Is(errTx, db.ErrNotFound) {
-			if errTx == nil {
-				return fmt.Errorf("deletion failed for '%s': %w", info.Fullpath, ErrPathAlreadyExist)
-			}
 			return errTx
 		}
 		id, errTx = s.deletionRepository.Create(ctx, info)

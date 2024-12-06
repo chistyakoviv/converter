@@ -49,6 +49,14 @@ func New(
 
 			return
 		}
+		if errors.Is(err, deletionq.ErrFileDoesNotExist) {
+			decoratedLogger.Debug("file does not exist", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusNotFound) // 404
+			render.JSON(w, r, resp.Error("file does not exist"))
+
+			return
+		}
 		if err != nil {
 			decoratedLogger.Error("failed to add file to deletion queue", slogger.Err(err))
 
