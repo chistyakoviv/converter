@@ -93,18 +93,11 @@ func (a *app) Run(ctx context.Context) {
 		}
 	}()
 
-	// Process conversion
+	// Process queues
 	go func() {
-		logger.Info("conversion tasks processing started")
+		logger.Info("tasks processing started")
 
-		taskService.ProcessConversion(ctx)
-	}()
-
-	// Process deletion
-	go func() {
-		logger.Info("deletion tasks processing started")
-
-		taskService.ProcessDeletion(ctx)
+		taskService.ProcessQueues(ctx)
 	}()
 
 	// Graceful Shutdown

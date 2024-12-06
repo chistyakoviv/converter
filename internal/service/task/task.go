@@ -33,6 +33,11 @@ type serv struct {
 	isScanning             bool
 }
 
+/**
+* We cannot add a task to the deletion queue while a conversion is in progress,
+* because the queue is non-blocking, and if there is no active receiver, the task will be lost.
+* To prevent this, use buffered channels to allow tasks to be queued even when there is no active receiver.
+**/
 func NewService(
 	logger *slog.Logger,
 	conversionQueueService service.ConversionQueueService,
@@ -46,8 +51,8 @@ func NewService(
 		deletionQueueService:   deletionQueueService,
 		converterService:       converterService,
 		conversionRepository:   conversionRepository,
-		conversionQueue:        make(chan interface{}),
-		deletionQueue:          make(chan interface{}),
+		conversionQueue:        make(chan interface{}, 1),
+		deletionQueue:          make(chan interface{}, 1),
 	}
 }
 
@@ -71,9 +76,17 @@ func (s *serv) TryQueueDeletion() bool {
 	}
 }
 
-func (s *serv) ProcessConversion(ctx context.Context) {
-	for range s.conversionQueue {
-		s.processConversion(ctx)
+func (s *serv) ProcessQueues(ctx context.Context) {
+	for {
+		select {
+		case <-s.conversionQueue:
+			s.processConversion(ctx)
+		case <-s.deletionQueue:
+			s.processDeletion(ctx)
+		case <-ctx.Done():
+			s.logger.Info("context done, exiting from task processing")
+			return
+		}
 	}
 }
 
@@ -114,13 +127,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 	}
 }
 
-func (s *serv) ProcessDeletion(ctx context.Context) {
-	for range s.deletionQueue {
-		s.processDeletions(ctx)
-	}
-}
-
-func (s *serv) processDeletions(ctx context.Context) error {
+func (s *serv) processDeletion(ctx context.Context) error {
 	op := "service.TaskService.ProcessDeletion"
 
 	logger := s.logger.With(slog.String("op", op))

@@ -23,8 +23,9 @@ type DeletionQueueService interface {
 type TaskService interface {
 	TryQueueConversion() bool
 	TryQueueDeletion() bool
-	ProcessConversion(ctx context.Context)
-	ProcessDeletion(ctx context.Context)
+	ProcessQueues(ctx context.Context)
+	// ProcessConversion(ctx context.Context)
+	// ProcessDeletion(ctx context.Context)
 	ProcessScanfs(ctx context.Context, rootDir string) error
 	IsScanning() bool
 }
