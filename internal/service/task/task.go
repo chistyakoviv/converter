@@ -20,6 +20,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/service/deletionq"
 )
 
+// TODO: use one queue for both deletion and conversion to avoid situation when deletion handled before conversion is finished
 type serv struct {
 	logger                 *slog.Logger
 	conversionQueueService service.ConversionQueueService

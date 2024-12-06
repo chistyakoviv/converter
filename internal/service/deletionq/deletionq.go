@@ -40,6 +40,7 @@ func (s *serv) Add(ctx context.Context, info *model.DeletionInfo) (int64, error)
 	var id int64
 
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+		// TODO: Verify the matching file in the addition queue and return a 404 response if not found.
 		var errTx error
 		_, errTx = s.deletionRepository.FindByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
