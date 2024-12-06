@@ -110,7 +110,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Deletion, error) {
 	builder := r.sq.
 		Select("*").
 		From(tablename).
-		OrderBy(fmt.Sprintf("%s DESC", updatedAtColumn)).
+		OrderBy(fmt.Sprintf("%s ASC", updatedAtColumn)).
 		Where(
 			sq.Eq{statusColumn: model.DeletionStatusPending},
 		).
