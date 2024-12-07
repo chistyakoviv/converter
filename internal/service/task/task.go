@@ -14,18 +14,18 @@ import (
 	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/model"
-	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/chistyakoviv/converter/internal/service/converter"
 	"github.com/chistyakoviv/converter/internal/service/deletionq"
 )
+
+// TODO: move converter errors, conversionq errors, deletionq errors to common service errors
 
 type serv struct {
 	logger                 *slog.Logger
 	conversionQueueService service.ConversionQueueService
 	deletionQueueService   service.DeletionQueueService
 	converterService       service.ConverterService
-	conversionRepository   repository.ConversionQueueRepository
 	conversionQueue        chan interface{}
 	deletionQueue          chan interface{}
 	mu                     sync.RWMutex
@@ -42,14 +42,12 @@ func NewService(
 	conversionQueueService service.ConversionQueueService,
 	deletionQueueService service.DeletionQueueService,
 	converterService service.ConverterService,
-	conversionRepository repository.ConversionQueueRepository,
 ) service.TaskService {
 	return &serv{
 		logger:                 logger,
 		conversionQueueService: conversionQueueService,
 		deletionQueueService:   deletionQueueService,
 		converterService:       converterService,
-		conversionRepository:   conversionRepository,
 		conversionQueue:        make(chan interface{}, 1),
 		deletionQueue:          make(chan interface{}, 1),
 	}
@@ -97,31 +95,44 @@ func (s *serv) processConversion(ctx context.Context) error {
 		// It is safe to ask for a task outside a transaction
 		// because there is no contention for resources,
 		// as the operation is processed in a single thread.
-		// TODO: Mark a task as done if a file with the filepath exists in the deletion queue
 		fileInfo, err := s.conversionQueueService.Pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
 		}
-
 		if err != nil {
 			logger.Error("failed to get conversion task", slogger.Err(err))
 			return err
 		}
 
+		_, err = s.deletionQueueService.Get(ctx, fileInfo.Fullpath)
+		if err == nil {
+			// Mark the task as done, because the file is in the deletion queue
+			doneErr := s.conversionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
+			if doneErr != nil {
+				logger.Error("failed to mark conversion task as done", slogger.Err(doneErr))
+				return doneErr
+			}
+			continue
+		}
+		if !errors.Is(err, db.ErrNotFound) {
+			logger.Error("failed to get deletion task while executing conversion task", slogger.Err(err))
+			return err
+		}
+
 		err = s.converterService.Convert(ctx, fileInfo)
 		if err != nil {
-			logger.Error("failed to convert file", slogger.Err(err))
-			err = s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, converter.GetConversionError(err).Code())
-			if err != nil {
-				logger.Error("failed to mark as canceled", slogger.Err(err))
-				return err
+			logger.Error("failed to convert file from conversion queue", slogger.Err(err))
+			cancelErr := s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, converter.GetConversionError(err).Code())
+			if cancelErr != nil {
+				logger.Error("failed to mark conversion task as canceled", slogger.Err(cancelErr))
+				return cancelErr
 			}
 			continue
 		}
 
 		err = s.conversionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
 		if err != nil {
-			logger.Error("failed to mark as completed", slogger.Err(err))
+			logger.Error("failed to mark conversion task as done", slogger.Err(err))
 			return err
 		}
 	}
@@ -132,26 +143,39 @@ func (s *serv) processDeletion(ctx context.Context) error {
 
 	logger := s.logger.With(slog.String("op", op))
 	for {
-		// TODO: Mark a task as done if a file with the filepath exists and its status is "pending" in the conversion queue
 		file, err := s.deletionQueueService.Pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
 		}
-
 		if err != nil {
 			logger.Error("failed to get deletion task", slogger.Err(err))
 			return err
 		}
 
-		fileInfo, err := s.conversionRepository.FindByFullpath(ctx, file.Fullpath)
-		if err != nil {
+		fileInfo, err := s.conversionQueueService.Get(ctx, file.Fullpath)
+		if errors.Is(err, db.ErrNotFound) {
+			// Cancel the task if the file is not in the conversion queue
 			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
 			if err != nil {
-				logger.Error("failed to mark as canceled", slogger.Err(err))
+				logger.Error("failed to mark deletion task as canceled", slogger.Err(err))
 				return err
 			}
+			continue
+		}
+		if err != nil {
+			logger.Error("failed to get conversion task while executing deletion task", slogger.Err(err))
 			return err
 		}
+		if fileInfo.IsPending() {
+			// Mark the task as done, because the file is not converted and there is no need to delete converted files
+			doneErr := s.deletionQueueService.MarkAsDone(ctx, file.Fullpath)
+			if doneErr != nil {
+				logger.Error("failed to mark deletion task as done", slogger.Err(doneErr))
+				return doneErr
+			}
+			continue
+		}
+
 		var removeErrs []error
 		for _, entry := range fileInfo.ConvertTo {
 			dest, err := fileInfo.AbsoluteDestinationPath(entry)
@@ -163,13 +187,12 @@ func (s *serv) processDeletion(ctx context.Context) error {
 				removeErrs = append(removeErrs, err)
 			}
 		}
-
 		if len(removeErrs) > 0 {
 			// Do not return an error, just mark as canceled
-			logger.Error("Failed to remove files", slogger.GroupErr(removeErrs))
+			logger.Error("Failed to remove files from deletion task", slogger.GroupErr(removeErrs))
 			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
 			if err != nil {
-				logger.Error("failed to mark as canceled", slogger.Err(err))
+				logger.Error("failed to mark deletion task as canceled", slogger.Err(err))
 				return err
 			}
 			continue
@@ -177,7 +200,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 
 		err = s.deletionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
 		if err != nil {
-			logger.Error("failed to mark as completed", slogger.Err(err))
+			logger.Error("failed to mark deletion task as done", slogger.Err(err))
 			return err
 		}
 	}

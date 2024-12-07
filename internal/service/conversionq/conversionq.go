@@ -113,6 +113,10 @@ func (s *serv) Pop(ctx context.Context) (*model.Conversion, error) {
 	return s.conversionRepository.FindOldestQueued(ctx)
 }
 
+func (s *serv) Get(ctx context.Context, fullpath string) (*model.Conversion, error) {
+	return s.conversionRepository.FindByFullpath(ctx, fullpath)
+}
+
 func (s *serv) MarkAsDone(ctx context.Context, fullpath string) error {
 	return s.conversionRepository.MarkAsDone(ctx, fullpath)
 }

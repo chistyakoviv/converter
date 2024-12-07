@@ -193,7 +193,6 @@ func bootstrap(ctx context.Context, c di.Container) {
 			resolveConversionQueueService(c),
 			resolveDeletionQueueService(c),
 			resolveConverterService(c),
-			resolveConversionQueueRepository(c),
 		)
 	})
 

@@ -9,6 +9,7 @@ import (
 type ConversionQueueService interface {
 	Add(ctx context.Context, info *model.ConversionInfo) (int64, error)
 	Pop(ctx context.Context) (*model.Conversion, error)
+	Get(ctx context.Context, fullpath string) (*model.Conversion, error)
 	MarkAsDone(ctx context.Context, fullpath string) error
 	MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error
 }
@@ -16,6 +17,7 @@ type ConversionQueueService interface {
 type DeletionQueueService interface {
 	Add(ctx context.Context, info *model.DeletionInfo) (int64, error)
 	Pop(ctx context.Context) (*model.Deletion, error)
+	Get(ctx context.Context, fullpath string) (*model.Deletion, error)
 	MarkAsDone(ctx context.Context, fullpath string) error
 	MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error
 }
