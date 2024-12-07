@@ -97,6 +97,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 		// It is safe to ask for a task outside a transaction
 		// because there is no contention for resources,
 		// as the operation is processed in a single thread.
+		// TODO: Mark a task as done if a file with the filepath exists in the deletion queue
 		fileInfo, err := s.conversionQueueService.Pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
@@ -131,6 +132,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 
 	logger := s.logger.With(slog.String("op", op))
 	for {
+		// TODO: Mark a task as done if a file with the filepath exists and its status is "pending" in the conversion queue
 		file, err := s.deletionQueueService.Pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
