@@ -106,7 +106,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 
 		_, err = s.deletionQueueService.Get(ctx, fileInfo.Fullpath)
 		if err == nil {
-			// Mark the task as done, because the file is in the deletion queue
+			// Mark the task as done if the file is in the deletion queue.
 			doneErr := s.conversionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
 			if doneErr != nil {
 				logger.Error("failed to mark conversion task as done", slogger.Err(doneErr))
@@ -154,7 +154,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 
 		fileInfo, err := s.conversionQueueService.Get(ctx, file.Fullpath)
 		if errors.Is(err, db.ErrNotFound) {
-			// Cancel the task if the file is not in the conversion queue
+			// Cancel the task if the file is not in the conversion queue.
 			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
 			if err != nil {
 				logger.Error("failed to mark deletion task as canceled", slogger.Err(err))
@@ -167,7 +167,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 			return err
 		}
 		if fileInfo.IsPending() {
-			// Mark the task as done, because the file is not converted and there is no need to delete converted files
+			// Mark the task as done if the file is not converted, as there’s no need to delete unconverted files.
 			doneErr := s.deletionQueueService.MarkAsDone(ctx, file.Fullpath)
 			if doneErr != nil {
 				logger.Error("failed to mark deletion task as done", slogger.Err(doneErr))
