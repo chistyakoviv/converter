@@ -73,7 +73,7 @@ func New(
 
 			return
 		}
-		if errors.Is(err, conversionq.ErrInvalidConversion) {
+		if errors.Is(err, conversionq.ErrInvalidConversionFormat) {
 			decoratedLogger.Debug("cannot convert to the specified format", slog.String("path", req.Path))
 
 			render.Status(r, http.StatusBadRequest) // 400

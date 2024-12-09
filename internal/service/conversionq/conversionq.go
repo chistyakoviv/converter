@@ -69,7 +69,7 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 			}
 		}
 		if len(unsupportedFormats) > 0 {
-			return -1, fmt.Errorf("conversion from '%s' to %s: %w", info.Ext, strings.Join(unsupportedFormats, ", "), ErrInvalidConversion)
+			return -1, fmt.Errorf("conversion from '%s' to %s: %w", info.Ext, strings.Join(unsupportedFormats, ", "), ErrInvalidConversionFormat)
 		}
 	}
 

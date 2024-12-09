@@ -15,11 +15,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/service"
-	"github.com/chistyakoviv/converter/internal/service/converter"
-	"github.com/chistyakoviv/converter/internal/service/deletionq"
 )
-
-// TODO: move converter errors, conversionq errors, deletionq errors to common service errors
 
 type serv struct {
 	logger                 *slog.Logger
@@ -106,8 +102,8 @@ func (s *serv) processConversion(ctx context.Context) error {
 
 		_, err = s.deletionQueueService.Get(ctx, fileInfo.Fullpath)
 		if err == nil {
-			// Mark the task as done if the file is in the deletion queue.
-			doneErr := s.conversionQueueService.MarkAsDone(ctx, fileInfo.Fullpath)
+			// Mark the task as canceled if the file is in the deletion queue.
+			doneErr := s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, service.ErrFileQueuedForDeletion)
 			if doneErr != nil {
 				logger.Error("failed to mark conversion task as done", slogger.Err(doneErr))
 				return doneErr
@@ -122,7 +118,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 		err = s.converterService.Convert(ctx, fileInfo)
 		if err != nil {
 			logger.Error("failed to convert file from conversion queue", slogger.Err(err))
-			cancelErr := s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, converter.GetConversionError(err).Code())
+			cancelErr := s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, service.GetConverterError(err).Code())
 			if cancelErr != nil {
 				logger.Error("failed to mark conversion task as canceled", slogger.Err(cancelErr))
 				return cancelErr
@@ -155,7 +151,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 		fileInfo, err := s.conversionQueueService.Get(ctx, file.Fullpath)
 		if errors.Is(err, db.ErrNotFound) {
 			// Cancel the task if the file is not in the conversion queue.
-			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
+			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, service.ErrFailedToRemoveFile)
 			if err != nil {
 				logger.Error("failed to mark deletion task as canceled", slogger.Err(err))
 				return err
@@ -190,7 +186,7 @@ func (s *serv) processDeletion(ctx context.Context) error {
 		if len(removeErrs) > 0 {
 			// Do not return an error, just mark as canceled
 			logger.Error("Failed to remove files from deletion task", slogger.GroupErr(removeErrs))
-			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, deletionq.ErrFailedToRemoveFile)
+			err = s.deletionQueueService.MarkAsCanceled(ctx, file.Fullpath, service.ErrFailedToRemoveFile)
 			if err != nil {
 				logger.Error("failed to mark deletion task as canceled", slogger.Err(err))
 				return err

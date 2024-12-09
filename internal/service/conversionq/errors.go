@@ -8,6 +8,5 @@ var (
 	ErrFileDoesNotExist        = errors.New("file does not exist")
 	ErrFileTypeNotSupported    = errors.New("file type not supported")
 	ErrFailedDetermineFileType = errors.New("failed to determine file type")
-	ErrInvalidConversion       = errors.New("cannot convert to the specified format")
-	ErrFileQueuedForDeletion   = errors.New("file is queued for deletion")
+	ErrInvalidConversionFormat = errors.New("cannot convert to the specified format")
 )
