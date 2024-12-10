@@ -16,6 +16,7 @@ type Config struct {
 	Task       Task       `yaml:"task"`
 	Image      Image      `yaml:"image"`
 	Video      Video      `yaml:"video"`
+	Defaults   *Defaults  `env:"-"`
 }
 
 type Postgres struct {
@@ -30,17 +31,28 @@ type HTTPServer struct {
 }
 
 type Task struct {
-	CheckTimeout time.Duration `yaml:"check_timeout" env:"TASK_CHECK_TIMEOUT" env-default:"5m0s"`
+	CheckTimeout time.Duration `yaml:"check_timeout" env:"TASK_CHECK_TIMEOUT" env-default:"5m"`
 }
 
 type Image struct {
-	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"IMAGE_DEFAULT_FORMATS" env-required:"true"`
-	Threads        int               `yaml:"threads" env:"IMAGE_THREADS" env-default:"1"`
+	Threads int `yaml:"threads" env:"IMAGE_THREADS" env-default:"1"`
 }
 
 type Video struct {
-	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
-	Threads        int               `yaml:"threads" env:"VIDEO_THREADS" env-default:"1"`
+	Threads int `yaml:"threads" env:"VIDEO_THREADS" env-default:"1"`
+}
+
+type Defaults struct {
+	Image ImageDefaults `yaml:"image"`
+	Video VideoDefaults `yaml:"video"`
+}
+
+type ImageDefaults struct {
+	DefaultFormats []model.ConvertTo `yaml:"default_formats" env-required:"true"`
+}
+
+type VideoDefaults struct {
+	DefaultFormats []model.ConvertTo `yaml:"default_formats" env-required:"true"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
@@ -67,6 +79,24 @@ func MustLoad() *Config {
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("failed to load config from env: %v", err)
 	}
+
+	var dfs Defaults
+
+	defaultsPath := os.Getenv("DEFAULTS_PATH")
+
+	if defaultsPath == "" {
+		log.Fatalf("failed to load file with defaults: path is not spedified")
+	}
+
+	if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
+		log.Fatalf("file with defaults %s does not exist", defaultsPath)
+	}
+
+	if err := cleanenv.ReadConfig(defaultsPath, &dfs); err != nil {
+		log.Fatalf("failed to load file with defaults from %s: %v", defaultsPath, err)
+	}
+
+	cfg.Defaults = &dfs
 
 	return &cfg
 }

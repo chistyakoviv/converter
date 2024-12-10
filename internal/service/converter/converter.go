@@ -29,10 +29,10 @@ func NewService(
 ) (service.ConverterService, error) {
 	imageConfigs := make(map[string]converter.ConversionConfig)
 	videoConfigs := make(map[string]converter.ConversionConfig)
-	for _, entry := range cfg.Image.DefaultFormats {
+	for _, entry := range cfg.Defaults.Image.DefaultFormats {
 		imageConfigs[entry.Ext] = entry.ConvConf
 	}
-	for _, entry := range cfg.Video.DefaultFormats {
+	for _, entry := range cfg.Defaults.Video.DefaultFormats {
 		videoConfigs[entry.Ext] = entry.ConvConf
 	}
 	return &serv{

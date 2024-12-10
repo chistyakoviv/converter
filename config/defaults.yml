@@ -1,0 +1,12 @@
+image:
+  default_formats:
+    - ext: "webp"
+video:
+  default_formats: 
+    - ext: "webm"
+      optional:
+        replace_orig_ext: true
+      conv_conf:
+        c:v: "libvpx-vp9"
+        c:a: "libopus"
+        crf: "40"

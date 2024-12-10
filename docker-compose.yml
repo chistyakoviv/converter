@@ -10,8 +10,9 @@ services:
     ports:
       - 80:80 # http
       - 6060:6060 # pprof metrics
-    # environment:
-      # - 'VIDEO_DEFAULT_FORMATS="[{"ext": "webm", optional": {"replace_orig_ext": true}, "conv_conf": {"c:v": "libvpx-vp9", "c:a": "libopus", "crf": "30", "b:a": "128k"}}]"'
+    environment:
+      CONFIG_PATH: config/local.yml
+      DEFAULTS_PATH: config/defaults.yml
 
   go-cli:
     image: golang:1.23.2-alpine3.20

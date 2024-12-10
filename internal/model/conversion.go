@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -112,6 +113,30 @@ type ConvertTo struct {
 func (item *ConvertTo) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First, we unmarshal into a map to capture all fields
 	rawData := make(map[string]interface{})
+	if err := unmarshal(&rawData); err != nil {
+		return err
+	}
+
+	// Now, attempt to extract the known fields
+	if ext, ok := rawData["ext"]; ok {
+		item.Ext = ext.(string) // Assuming ext is a string
+	}
+
+	if conf, ok := rawData["conv_conf"]; ok {
+		item.ConvConf = conf.(map[string]interface{}) // Assuming conf is a map
+	}
+
+	if optional, ok := rawData["optional"]; ok {
+		item.Optional = optional.(map[string]interface{}) // Assuming optional is a map
+	}
+
+	return nil
+}
+
+func (item *ConvertTo) UnmarshalENV(unmarshal func(interface{}) error) error {
+	// First, we unmarshal into a map to capture all fields
+	rawData := make(map[string]interface{})
+	log.Fatalf("rawData: %v\n", rawData)
 	if err := unmarshal(&rawData); err != nil {
 		return err
 	}
