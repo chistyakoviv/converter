@@ -1,11 +1,6 @@
 env: "local" # local, dev, prod
 database:
   dsn: "postgresql://app:secret@converter-pg:5432/app?sslmode=disable"
-  # user: "app"
-  # password: "secret"
-  # db: "app"
-  # host: "converter-pg"
-  # port: "5432"
 http_server:
   address: "0.0.0.0:80"
   read_timeout: 4s
@@ -16,6 +11,7 @@ task:
 image:
   default_formats:
     - ext: "webp"
+  threads: 4
 video:
   default_formats: 
     - ext: "webm"

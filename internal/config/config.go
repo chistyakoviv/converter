@@ -40,11 +40,12 @@ type Task struct {
 
 type Image struct {
 	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"IMAGE_DEFAULT_FORMATS" env-required:"true"`
+	Threads        int               `yaml:"threads" env:"IMAGE_THREADS" env-default:"1"`
 }
 
 type Video struct {
 	DefaultFormats []model.ConvertTo `yaml:"default_formats" env:"VIDEO_DEFAULT_FORMATS" env-required:"true"`
-	Threads        int               `yaml:"threads" env:"VIDEO_THREADS" env-default:"4"`
+	Threads        int               `yaml:"threads" env:"VIDEO_THREADS" env-default:"1"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown

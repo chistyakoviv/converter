@@ -71,16 +71,20 @@ func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageC
 
 	vips.LoggingSettings(vipsLogger, logLevel)
 	// See config example https://github.com/davidbyttow/govips/blob/master/examples/image/bench_test.go
-	// conf := &vips.Config{
-	// 	ConcurrencyLevel: 0,
-	// 	MaxCacheFiles:    0,
-	// 	MaxCacheMem:      0,
-	// 	MaxCacheSize:     0,
-	// 	ReportLeaks:      false,
-	// 	CacheTrace:       false,
-	// 	CollectStats:     false,
-	// }
-	vips.Startup(nil)
+	// Set default values as in the source https://github.com/davidbyttow/govips/blob/4188b98393e95247efbae5011a9b8b98fbcd329d/vips/govips.go#L17
+	conf := &vips.Config{
+		ConcurrencyLevel: 1,
+		MaxCacheFiles:    0,
+		MaxCacheMem:      50 * 1024 * 1024,
+		MaxCacheSize:     100,
+		// ReportLeaks:      false,
+		// CacheTrace:       false,
+		// CollectStats:     false,
+	}
+	if cfg.Image.Threads > 0 {
+		conf.ConcurrencyLevel = cfg.Image.Threads
+	}
+	vips.Startup(conf)
 
 	return &conv{
 		logger: logger,
