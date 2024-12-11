@@ -47,7 +47,6 @@ type Defaults struct {
 	Video VideoDefaults `yaml:"video"`
 }
 
-// TODO: make defaults optional
 type ImageDefaults struct {
 	Formats []model.ConvertTo `yaml:"formats"`
 }
