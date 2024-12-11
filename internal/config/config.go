@@ -24,7 +24,7 @@ type Postgres struct {
 }
 
 type HTTPServer struct {
-	Address      string        `yaml:"address" env:"ADDRESS" env-default:"localhost:80"`
+	Address      string        `yaml:"address" env:"ADDRESS" env-default:"0.0.0.0:80"`
 	ReadTimeout  time.Duration `yaml:"read_timeout" env:"READ_TIMEOUT" env-required:"true"`
 	WriteTimeout time.Duration `yaml:"write_timeout" env:"WRITE_TIMEOUT" env-required:"true"`
 	IdleTimeout  time.Duration `yaml:"idle_timeout" env:"IDLE_TIMEOUT" env-required:"true"`
