@@ -118,42 +118,6 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 	return &file, nil
 }
 
-func (r *repo) FindByFilestem(ctx context.Context, filestem string) (*model.Conversion, error) {
-	builder := r.sq.Select("*").From(tablename).Where(sq.Eq{filestemColumn: filestem}).Limit(1)
-
-	sql, args, err := builder.ToSql()
-	if err != nil {
-		return nil, err
-	}
-
-	query := db.Query{
-		Name:     "repository.conversion_queue.FindByFilestem",
-		QueryRaw: sql,
-	}
-
-	var file model.Conversion
-	err = r.db.DB().QueryRow(ctx, query, args...).Scan(
-		&file.Id,
-		&file.Fullpath,
-		&file.Path,
-		&file.Filestem,
-		&file.Ext,
-		&file.ConvertTo,
-		&file.Status,
-		&file.ErrorCode,
-		&file.CreatedAt,
-		&file.UpdatedAt,
-	)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("%s: %w", query.Name, db.ErrNotFound)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", query.Name, err)
-	}
-
-	return &file, nil
-}
-
 func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) {
 	builder := r.sq.
 		Select("*").

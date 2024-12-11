@@ -85,16 +85,10 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	// If `fullpath` exists, return an appropriate error. Otherwise, proceed to
 	// insert a new row within the same transaction.
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		// Both fullpath and filestem must be unique
-		// to avoid mistakenly converting files that are already converted versions of another file
+		// Filesystem scanning may detect already converted files and attempt to queue them,
+		// which is undesirable behavior.
+		// TODO: Implement a solution to prevent re-conversion of already converted files.
 		var errTx error
-		_, errTx = s.conversionRepository.FindByFilestem(ctx, info.Filestem)
-		if !errors.Is(errTx, db.ErrNotFound) {
-			if errTx == nil {
-				return fmt.Errorf("add failed for '%s': %w", info.Fullpath, ErrFilestemAlreadyExist)
-			}
-			return errTx
-		}
 		_, errTx = s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
 		if !errors.Is(errTx, db.ErrNotFound) {
 			if errTx == nil {

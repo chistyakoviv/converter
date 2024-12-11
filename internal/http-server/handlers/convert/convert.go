@@ -41,7 +41,7 @@ func New(
 		}
 
 		id, err := conversionService.Add(ctx, converter.ToConversionInfoFromRequest(req))
-		if errors.Is(err, conversionq.ErrPathAlreadyExist) || errors.Is(err, conversionq.ErrFilestemAlreadyExist) {
+		if errors.Is(err, conversionq.ErrPathAlreadyExist) {
 			decoratedLogger.Debug("file with the specified path or filestem already exists", slog.String("path", req.Path))
 
 			render.Status(r, http.StatusConflict) // 409
