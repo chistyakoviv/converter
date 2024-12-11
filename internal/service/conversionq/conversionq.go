@@ -50,16 +50,21 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		var ok bool
 
 		if ok, err = file.IsImage(info.Fullpath); ok {
-			info.ConvertTo = s.cfg.Defaults.Image.DefaultFormats
+			info.ConvertTo = s.cfg.Defaults.Image.Formats
 		}
 		if err != nil {
 			return -1, fmt.Errorf("%w: %w", ErrFailedDetermineFileType, err)
 		}
 		if ok, err = file.IsVideo(info.Fullpath); ok {
-			info.ConvertTo = s.cfg.Defaults.Video.DefaultFormats
+			info.ConvertTo = s.cfg.Defaults.Video.Formats
 		}
 		if err != nil {
 			return -1, fmt.Errorf("%w: %w", ErrFailedDetermineFileType, err)
+		}
+
+		// Return error if no target formats are specified
+		if info.ConvertTo == nil {
+			return -1, fmt.Errorf("target formats not specified: %w", ErrEmptyTargetFormatList)
 		}
 	} else {
 		var unsupportedFormats []string

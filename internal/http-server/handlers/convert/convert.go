@@ -81,6 +81,14 @@ func New(
 
 			return
 		}
+		if errors.Is(err, conversionq.ErrEmptyTargetFormatList) {
+			decoratedLogger.Debug("target format list is empty", slog.String("path", req.Path))
+
+			render.Status(r, http.StatusBadRequest) // 400
+			render.JSON(w, r, resp.Error("target format list is empty"))
+
+			return
+		}
 		if err != nil {
 			decoratedLogger.Error("failed to add file to conversion queue", slogger.Err(err))
 

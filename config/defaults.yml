@@ -1,8 +1,8 @@
 image:
-  default_formats:
+  formats:
     - ext: "webp"
 video:
-  default_formats: 
+  formats: 
     - ext: "webm"
       optional:
         replace_orig_ext: true

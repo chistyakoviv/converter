@@ -47,12 +47,13 @@ type Defaults struct {
 	Video VideoDefaults `yaml:"video"`
 }
 
+// TODO: make defaults optional
 type ImageDefaults struct {
-	DefaultFormats []model.ConvertTo `yaml:"default_formats" env-required:"true"`
+	Formats []model.ConvertTo `yaml:"formats"`
 }
 
 type VideoDefaults struct {
-	DefaultFormats []model.ConvertTo `yaml:"default_formats" env-required:"true"`
+	Formats []model.ConvertTo `yaml:"formats"`
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
@@ -84,16 +85,14 @@ func MustLoad() *Config {
 
 	defaultsPath := os.Getenv("DEFAULTS_PATH")
 
-	if defaultsPath == "" {
-		log.Fatalf("failed to load file with defaults: path is not spedified")
-	}
+	if defaultsPath != "" {
+		if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
+			log.Fatalf("file with defaults %s does not exist", defaultsPath)
+		}
 
-	if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
-		log.Fatalf("file with defaults %s does not exist", defaultsPath)
-	}
-
-	if err := cleanenv.ReadConfig(defaultsPath, &dfs); err != nil {
-		log.Fatalf("failed to load file with defaults from %s: %v", defaultsPath, err)
+		if err := cleanenv.ReadConfig(defaultsPath, &dfs); err != nil {
+			log.Fatalf("failed to load file with defaults from %s: %v", defaultsPath, err)
+		}
 	}
 
 	cfg.Defaults = &dfs
