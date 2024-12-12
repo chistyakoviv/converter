@@ -14,12 +14,6 @@ services:
       CONFIG_PATH: config/local.yml
       DEFAULTS_PATH: config/defaults.yml
 
-  go-cli:
-    image: golang:1.23.2-alpine3.20
-    volumes:
-      - ./:/go/src/github.com/chistyakoviv/converter
-    working_dir: /go/src/github.com/chistyakoviv/converter
-
   converter-pg:
     image: postgres:17.0-alpine3.20
     environment:
@@ -29,12 +23,11 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
 
-  converter-migrator:
+  go-cli:
     build:
-      dockerfile: ./docker/development/migrator/Dockerfile
+      dockerfile: ./docker/development/go-cli/Dockerfile
     volumes:
-      - ./:/app
+      - ./:/go/src/github.com/chistyakoviv/converter
     environment:
       - PG_DSN=postgres://app:secret@converter-pg/app?sslmode=disable
       - GOOSE_MIGRATION_DIR=./migrations
-    command: make converter-migrate-up

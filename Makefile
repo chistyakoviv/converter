@@ -3,16 +3,19 @@ cli-test:
 	docker compose run --rm go-cli sh -c "CONFIG_PATH=config/local.yml go run cmd/converter/main.go"
 
 migrate-status:
-	docker compose run --rm converter-migrator make converter-migrate-status
+	docker compose run --rm go-cli make converter-migrate-status
 
 migrate-up:
-	docker compose run --rm converter-migrator make converter-migrate-up
+	docker compose run --rm go-cli make converter-migrate-up
 
 migrate-down:
-	docker compose run --rm converter-migrator make converter-migrate-down
+	docker compose run --rm go-cli make converter-migrate-down
 
 migration:
-	docker compose run --rm converter-migrator goose create ${MIGRATION_NAME} sql
+	docker compose run --rm go-cli goose create ${MIGRATION_NAME} sql
+
+mocks:
+	docker compose run --rm go-cli mockery
 
 db-connect:
 	docker compose exec converter-pg psql postgres://app:secret@converter-pg/app

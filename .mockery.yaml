@@ -1,0 +1,7 @@
+with-expecter: true
+# outpkg: mocks
+packages:
+    github.com/chistyakoviv/converter/internal/repository:
+        # place your package-specific config here
+        config:
+        interfaces:
