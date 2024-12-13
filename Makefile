@@ -14,8 +14,12 @@ migrate-down:
 migration:
 	docker compose run --rm go-cli goose create ${MIGRATION_NAME} sql
 
+.PHONY: mocks
 mocks:
 	docker compose run --rm go-cli mockery
+
+tests:
+	docker compose run --rm converter go test -v ./...
 
 db-connect:
 	docker compose exec converter-pg psql postgres://app:secret@converter-pg/app

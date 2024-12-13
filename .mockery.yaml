@@ -1,7 +1,21 @@
 with-expecter: true
-# outpkg: mocks
+dir: "{{.InterfaceDir}}/mocks"
+outpkg: "mocks"
 packages:
-    github.com/chistyakoviv/converter/internal/repository:
-        # place your package-specific config here
-        config:
+    github.com/chistyakoviv/converter/internal/http-server/handlers:
         interfaces:
+            Validator:
+    github.com/chistyakoviv/converter/internal/service:
+        interfaces:
+            ConversionQueueService:
+            DeletionQueueService:
+            TaskService:
+    # github.com/chistyakoviv/converter/internal/repository:
+        # place your package-specific config here
+        # config:
+        # interfaces:
+        #     # select the interfaces you want mocked
+        #     ConversionQueueRepository:
+        #         # Modify package-level config for this specific interface (if applicable)
+        #         config:
+        #     DeletionQueueRepository:

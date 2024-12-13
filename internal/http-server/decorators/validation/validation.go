@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/chistyakoviv/converter/internal/http-server/handlers"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/go-chi/render"
@@ -14,7 +15,7 @@ import (
 
 func ValidationDecorator(
 	logger *slog.Logger,
-	validation *validator.Validate,
+	validation handlers.Validator,
 	data interface{},
 	w http.ResponseWriter,
 	r *http.Request,
@@ -25,6 +26,7 @@ func ValidationDecorator(
 		// Handle it separately
 		logger.Error("request body is empty")
 
+		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, resp.Error("empty request"))
 
 		return errors.New("empty request")
@@ -32,6 +34,7 @@ func ValidationDecorator(
 	if err != nil {
 		logger.Error("failed to decode request body", slogger.Err(err))
 
+		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, resp.Error("failed to decode request"))
 
 		return errors.New("failed to decode request")
