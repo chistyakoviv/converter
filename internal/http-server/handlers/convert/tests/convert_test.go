@@ -12,77 +12,105 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/chistyakoviv/converter/internal/http-server/handlers"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
 	handlersMocks "github.com/chistyakoviv/converter/internal/http-server/handlers/mocks"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
+	"github.com/chistyakoviv/converter/internal/service"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
 func TestConvertHandler(t *testing.T) {
-	t.Run("Incorrect request: empty data", func(t *testing.T) {
-		t.Parallel()
+	var (
+		ctx        = context.Background()
+		logger     = dummy.NewDummyLogger()
+		validation = validator.New()
+	)
 
-		mockValidator := handlersMocks.NewMockValidator(t)
-		mockValidator.AssertNotCalled(t, "Struct")
-		mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-		mockConversionService.AssertNotCalled(t, "Add")
-		mockTaskService := serviceMocks.NewMockTaskService(t)
-		mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+	type testcase struct {
+		name                  string
+		input                 string
+		respError             string
+		statusCode            int
+		mockValidator         func(tc *testcase) handlers.Validator
+		mockConversionService func(tc *testcase) service.ConversionQueueService
+		mockTaskService       func(tc *testcase) service.TaskService
+	}
 
-		handler := convert.New(
-			context.Background(),
-			dummy.NewDummyLogger(),
-			mockValidator,
-			mockConversionService,
-			mockTaskService,
-		)
-		input := ""
-		req, err := http.NewRequest(http.MethodPost, "/convert", bytes.NewReader([]byte(input)))
-		require.NoError(t, err)
+	cases := []testcase{
+		{
+			name:       "Incorrect request: empty data",
+			input:      "",
+			respError:  "empty request",
+			statusCode: http.StatusBadRequest,
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.AssertNotCalled(t, "Struct")
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.AssertNotCalled(t, "Add")
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:       "Incorrect request: invalid data",
+			input:      `{"fullpath": "/path/to/file.ext"}`,
+			respError:  "field Path is a required field",
+			statusCode: http.StatusBadRequest,
+			mockValidator: func(tc *testcase) handlers.Validator {
+				return validation
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.AssertNotCalled(t, "Add")
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+	}
 
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
+	for _, tc := range cases {
+		tc := tc
 
-		body := rr.Body.String()
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		var resp convert.ConversionResponse
+			mockValidator := tc.mockValidator(&tc)
+			mockConversionService := tc.mockConversionService(&tc)
+			mockTaskService := tc.mockTaskService(&tc)
 
-		require.NoError(t, json.Unmarshal([]byte(body), &resp))
+			handler := convert.New(
+				ctx,
+				logger,
+				mockValidator,
+				mockConversionService,
+				mockTaskService,
+			)
+			req, err := http.NewRequest(http.MethodPost, "/convert", bytes.NewReader([]byte(tc.input)))
+			require.NoError(t, err)
 
-		assert.Equal(t, "empty request", resp.Error)
-		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
-	})
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-	t.Run("Incorrect request: invalid data", func(t *testing.T) {
-		t.Parallel()
+			body := rr.Body.String()
 
-		mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-		mockConversionService.AssertNotCalled(t, "Add")
-		mockTaskService := serviceMocks.NewMockTaskService(t)
-		mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+			var resp convert.ConversionResponse
 
-		handler := convert.New(
-			context.Background(),
-			dummy.NewDummyLogger(),
-			validator.New(),
-			mockConversionService,
-			mockTaskService,
-		)
+			require.NoError(t, json.Unmarshal([]byte(body), &resp))
 
-		input := `{"fullpath": "/path/to/file.ext"}`
-		req, err := http.NewRequest(http.MethodPost, "/convert", bytes.NewReader([]byte(input)))
-		require.NoError(t, err)
-
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
-
-		body := rr.Body.String()
-
-		var resp convert.ConversionResponse
-
-		require.NoError(t, json.Unmarshal([]byte(body), &resp))
-
-		assert.Equal(t, "field Path is a required field", resp.Error)
-		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
-	})
+			assert.Equal(t, tc.respError, resp.Error)
+			assert.Equal(t, tc.statusCode, rr.Result().StatusCode)
+		})
+	}
 }
