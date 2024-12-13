@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
@@ -42,16 +43,14 @@ func TestConvertHandler(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 
-		require.Equal(t, rr.Code, http.StatusBadRequest)
-
 		body := rr.Body.String()
 
 		var resp convert.ConversionResponse
 
 		require.NoError(t, json.Unmarshal([]byte(body), &resp))
 
-		require.Equal(t, "empty request", resp.Error)
-		require.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+		assert.Equal(t, "empty request", resp.Error)
+		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
 	})
 
 	t.Run("Incorrect request: invalid data", func(t *testing.T) {
@@ -77,15 +76,13 @@ func TestConvertHandler(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 
-		require.Equal(t, rr.Code, http.StatusBadRequest)
-
 		body := rr.Body.String()
 
 		var resp convert.ConversionResponse
 
 		require.NoError(t, json.Unmarshal([]byte(body), &resp))
 
-		require.Equal(t, "field Path is a required field", resp.Error)
-		require.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+		assert.Equal(t, "field Path is a required field", resp.Error)
+		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
 	})
 }
