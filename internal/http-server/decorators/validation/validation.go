@@ -47,6 +47,7 @@ func ValidationDecorator(
 
 		logger.Error("invalid request", slogger.Err(err))
 
+		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, resp.ValidationError(validationErr))
 
 		return errors.New("invalid request")

@@ -3,10 +3,12 @@ package tests
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/require"
 
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
@@ -22,7 +24,9 @@ func TestConvertHandler(t *testing.T) {
 		mockValidator := handlersMocks.NewMockValidator(t)
 
 		mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+		mockConversionService.AssertNotCalled(t, "Add")
 		mockTaskService := serviceMocks.NewMockTaskService(t)
+		mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 
 		handler := convert.New(
 			context.Background(),
@@ -31,11 +35,57 @@ func TestConvertHandler(t *testing.T) {
 			mockConversionService,
 			mockTaskService,
 		)
+		input := ""
+		req, err := http.NewRequest(http.MethodPost, "/convert", bytes.NewReader([]byte(input)))
+		require.NoError(t, err)
 
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodPost, "/convert", bytes.NewBuffer(nil))
-		handler(w, req)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
+		require.Equal(t, rr.Code, http.StatusBadRequest)
+
+		body := rr.Body.String()
+
+		var resp convert.ConversionResponse
+
+		require.NoError(t, json.Unmarshal([]byte(body), &resp))
+
+		require.Equal(t, "empty request", resp.Error)
+		require.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+	})
+
+	t.Run("Incorrect request: invalid data", func(t *testing.T) {
+		t.Parallel()
+
+		mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+		mockConversionService.AssertNotCalled(t, "Add")
+		mockTaskService := serviceMocks.NewMockTaskService(t)
+		mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+
+		handler := convert.New(
+			context.Background(),
+			dummy.NewDummyLogger(),
+			validator.New(),
+			mockConversionService,
+			mockTaskService,
+		)
+
+		input := `{"fullpath": "/path/to/file.ext"}`
+		req, err := http.NewRequest(http.MethodPost, "/convert", bytes.NewReader([]byte(input)))
+		require.NoError(t, err)
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		require.Equal(t, rr.Code, http.StatusBadRequest)
+
+		body := rr.Body.String()
+
+		var resp convert.ConversionResponse
+
+		require.NoError(t, json.Unmarshal([]byte(body), &resp))
+
+		require.Equal(t, "field Path is a required field", resp.Error)
+		require.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
 	})
 }
