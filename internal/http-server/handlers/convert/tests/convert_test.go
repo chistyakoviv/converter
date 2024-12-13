@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,16 +16,20 @@ import (
 	"github.com/chistyakoviv/converter/internal/http-server/handlers"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/convert"
 	handlersMocks "github.com/chistyakoviv/converter/internal/http-server/handlers/mocks"
+	"github.com/chistyakoviv/converter/internal/http-server/request"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
+	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/service"
+	"github.com/chistyakoviv/converter/internal/service/conversionq"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
 func TestConvertHandler(t *testing.T) {
 	var (
-		ctx        = context.Background()
-		logger     = dummy.NewDummyLogger()
-		validation = validator.New()
+		errorId    int64 = -1
+		ctx              = context.Background()
+		logger           = dummy.NewDummyLogger()
+		validation       = validator.New()
 	)
 
 	type testcase struct {
@@ -32,6 +37,8 @@ func TestConvertHandler(t *testing.T) {
 		input                 string
 		respError             string
 		statusCode            int
+		conversionInfo        *model.ConversionInfo
+		conversionReq         *request.ConversionRequest
 		mockValidator         func(tc *testcase) handlers.Validator
 		mockConversionService func(tc *testcase) service.ConversionQueueService
 		mockTaskService       func(tc *testcase) service.TaskService
@@ -70,6 +77,167 @@ func TestConvertHandler(t *testing.T) {
 			mockConversionService: func(tc *testcase) service.ConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.AssertNotCalled(t, "Add")
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: path duplicate",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "file with the specified path already exists",
+			statusCode:     http.StatusConflict,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrPathAlreadyExist).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: non-existent file",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "file does not exist",
+			statusCode:     http.StatusNotFound,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFileDoesNotExist).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: unsupported extension",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "file type not supported",
+			statusCode:     http.StatusBadRequest,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFileTypeNotSupported).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: unknown file type",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "failed to determine file type",
+			statusCode:     http.StatusUnprocessableEntity,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFailedDetermineFileType).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: wrong conversion format",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "cannot convert to the specified format",
+			statusCode:     http.StatusBadRequest,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrInvalidConversionFormat).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: no target formats specified",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "target format list is empty",
+			statusCode:     http.StatusBadRequest,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrEmptyTargetFormatList).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Incorrect request: unknown error",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "failed to add file to conversion queue",
+			statusCode:     http.StatusInternalServerError,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, errors.New("Random error")).Once()
 				return mockConversionService
 			},
 			mockTaskService: func(tc *testcase) service.TaskService {
