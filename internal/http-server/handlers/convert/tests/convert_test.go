@@ -30,6 +30,7 @@ func TestConvertHandler(t *testing.T) {
 		ctx              = context.Background()
 		logger           = dummy.NewDummyLogger()
 		validation       = validator.New()
+		convertTo        = []model.ConvertTo{{Ext: "123", Optional: map[string]interface{}{"replace_orig_ext": true}, ConvConf: map[string]interface{}{"quality": 100.0}}}
 	)
 
 	type testcase struct {
@@ -179,11 +180,11 @@ func TestConvertHandler(t *testing.T) {
 		},
 		{
 			name:           "Incorrect request: wrong conversion format",
-			input:          `{"path": "/path/to/file.ext"}`,
+			input:          `{"path": "/path/to/file.ext", "convert_to": [{"ext": "123", "optional": {"replace_orig_ext": true}, "conv_conf": {"quality": 100}}]}`,
 			respError:      "cannot convert to the specified format",
 			statusCode:     http.StatusBadRequest,
-			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
-			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext", ConvertTo: convertTo},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext", ConvertTo: convertTo},
 			mockValidator: func(tc *testcase) handlers.Validator {
 				mockValidator := handlersMocks.NewMockValidator(t)
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
@@ -237,7 +238,7 @@ func TestConvertHandler(t *testing.T) {
 			},
 			mockConversionService: func(tc *testcase) service.ConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, errors.New("Random error")).Once()
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, errors.New("Unknown error")).Once()
 				return mockConversionService
 			},
 			mockTaskService: func(tc *testcase) service.TaskService {
