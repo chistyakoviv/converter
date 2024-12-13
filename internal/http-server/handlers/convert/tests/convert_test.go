@@ -23,7 +23,7 @@ func TestConvertHandler(t *testing.T) {
 		t.Parallel()
 
 		mockValidator := handlersMocks.NewMockValidator(t)
-
+		mockValidator.AssertNotCalled(t, "Struct")
 		mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 		mockConversionService.AssertNotCalled(t, "Add")
 		mockTaskService := serviceMocks.NewMockTaskService(t)
