@@ -7,6 +7,9 @@ type FormatInfo struct {
 var (
 	ImageConversionFormats = FormatInfo{
 		SupportedFormats: map[string]bool{
+			"jpg":  true,
+			"jpeg": true,
+			"png":  true,
 			"webp": true,
 			"avif": true,
 		},
