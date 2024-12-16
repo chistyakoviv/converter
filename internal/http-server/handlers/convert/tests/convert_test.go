@@ -31,7 +31,7 @@ func TestConvertHandler(t *testing.T) {
 		ctx              = context.Background()
 		logger           = dummy.NewDummyLogger()
 		validation       = validator.New()
-		convertTo        = []model.ConvertTo{{Ext: "123", Optional: map[string]interface{}{"replace_orig_ext": true}, ConvConf: map[string]interface{}{"quality": 100.0}}}
+		convertTo        = []model.ConvertTo{{Ext: "123", Optional: map[string]interface{}{"replace_orig_ext": true}, ConvConf: map[string]interface{}{"quality": float64(100)}}}
 	)
 
 	type testcase struct {
