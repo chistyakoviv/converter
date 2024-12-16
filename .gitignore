@@ -3,3 +3,6 @@
 
 # test files
 /files
+
+# binaries
+/bin

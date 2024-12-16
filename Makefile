@@ -14,6 +14,9 @@ migrate-down:
 migration:
 	docker compose run --rm go-cli goose create ${MIGRATION_NAME} sql
 
+lint:
+	docker compose run --rm go-cli make converter-lint
+
 .PHONY: mocks
 mocks:
 	docker compose run --rm go-cli mockery
@@ -39,3 +42,6 @@ converter-migrate-up: wait-db
 
 converter-migrate-down: wait-db
 	goose postgres "${PG_DSN}" down -v
+
+converter-lint:
+	golangci-lint run -v ./... --config .golangci.pipeline.yaml

@@ -14,7 +14,8 @@ RUN mkdir -p /tmp/mockery && \
 
 WORKDIR /go/src/github.com/chistyakoviv/converter
 
-RUN go install github.com/pressly/goose/v3/cmd/goose@v3.23.0
+RUN go install github.com/pressly/goose/v3/cmd/goose@v3.23.0 && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
 
 COPY ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod 555 /usr/local/bin/wait-for-it
