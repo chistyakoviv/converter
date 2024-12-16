@@ -45,7 +45,7 @@ func New(
 			decoratedLogger.Debug("file with the specified path or filestem already exists", slog.String("path", req.Path))
 
 			render.Status(r, http.StatusConflict) // 409
-			render.JSON(w, r, resp.Error("file with the specified path already exists"))
+			render.JSON(w, r, resp.Error("file with the specified path already exists in the conversion queue"))
 
 			return
 		}

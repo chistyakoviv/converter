@@ -90,7 +90,7 @@ func TestConvertHandler(t *testing.T) {
 		{
 			name:           "Incorrect request: path duplicate",
 			input:          `{"path": "/path/to/file.ext"}`,
-			respError:      "file with the specified path already exists",
+			respError:      "file with the specified path already exists in the conversion queue",
 			statusCode:     http.StatusConflict,
 			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
 			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},

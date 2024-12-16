@@ -9,13 +9,13 @@ import (
 	"github.com/chistyakoviv/converter/internal/http-server/converter"
 	loggerDecorator "github.com/chistyakoviv/converter/internal/http-server/decorators/logger"
 	validationrDecorator "github.com/chistyakoviv/converter/internal/http-server/decorators/validation"
+	"github.com/chistyakoviv/converter/internal/http-server/handlers"
 	"github.com/chistyakoviv/converter/internal/http-server/request"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/chistyakoviv/converter/internal/service/deletionq"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 )
 
 type DeletionResponse struct {
@@ -26,7 +26,7 @@ type DeletionResponse struct {
 func New(
 	ctx context.Context,
 	logger *slog.Logger,
-	validation *validator.Validate,
+	validation handlers.Validator,
 	deletionService service.DeletionQueueService,
 	taskService service.TaskService,
 ) http.HandlerFunc {
