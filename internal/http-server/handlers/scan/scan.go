@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-type DeletionResponse struct {
+type ScanResponse struct {
 	resp.Response
 }
 
@@ -43,6 +43,8 @@ func New(
 			taskService.TryQueueConversion()
 		}()
 
-		render.JSON(w, r, resp.OK())
+		render.JSON(w, r, ScanResponse{
+			Response: resp.OK(),
+		})
 	}
 }
