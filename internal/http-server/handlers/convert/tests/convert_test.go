@@ -27,6 +27,7 @@ import (
 func TestConvertHandler(t *testing.T) {
 	var (
 		errorId    int64 = -1
+		successId  int64 = 1
 		ctx              = context.Background()
 		logger           = dummy.NewDummyLogger()
 		validation       = validator.New()
@@ -244,6 +245,29 @@ func TestConvertHandler(t *testing.T) {
 			mockTaskService: func(tc *testcase) service.TaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
+				return mockTaskService
+			},
+		},
+		{
+			name:           "Successful request",
+			input:          `{"path": "/path/to/file.ext"}`,
+			respError:      "",
+			statusCode:     http.StatusOK,
+			conversionInfo: &model.ConversionInfo{Fullpath: "/path/to/file.ext", Path: "/path/to", Filestem: "file", Ext: "ext"},
+			conversionReq:  &request.ConversionRequest{Path: "/path/to/file.ext"},
+			mockValidator: func(tc *testcase) handlers.Validator {
+				mockValidator := handlersMocks.NewMockValidator(t)
+				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
+				return mockValidator
+			},
+			mockConversionService: func(tc *testcase) service.ConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(successId, nil).Once()
+				return mockConversionService
+			},
+			mockTaskService: func(tc *testcase) service.TaskService {
+				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService.On("TryQueueConversion").Return(true).Once()
 				return mockTaskService
 			},
 		},
