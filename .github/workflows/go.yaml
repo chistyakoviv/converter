@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      VIPS_VERSION: 8.15.1
+      VIPS_URL: https://github.com/libvips/libvips/releases/download
     steps:
         - uses: actions/checkout@v3
 
@@ -24,18 +27,29 @@ jobs:
           # see https://github.com/jcupitt/docker-builds/blob/master/libvips-ubuntu18.04/Dockerfile
           run: |
             sudo apt-get update
-            sudo apt-get install -y software-properties-common build-essential pkg-config libvips-dev
+            sudo apt-get install -y software-properties-common build-essential pkg-config unzip wget
             sudo apt-get install -y glib-2.0-dev libheif-dev libexpat-dev librsvg2-dev libpng-dev libgif-dev libjpeg-dev libtiff-dev libexif-dev liblcms2-dev liborc-dev libffi-dev
             sudo apt-get install -y libaom-dev ffmpeg
 
-        - name: Verify installation
+        - name: Build libvips from source
           run: |
-            vips --version
-            vips -l
-            ffmpeg -version
-            pkg-config libheif --print-variables
-            pwd
-            vips copy internal/converter/govips/tests/files/images/gen.jpg internal/converter/govips/tests/files/images/gen.avif
+            wget ${VIPS_URL}/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.gz \
+              && tar xzf vips-${VIPS_VERSION}.tar.gz \
+              && cd vips-${VIPS_VERSION} \
+              && ./configure \
+              && make V=0 \
+              && make install \
+              && ldconfig
+          working-directory: /usr/local/src
+
+        # - name: Verify installation
+        #   run: |
+        #     vips --version
+        #     vips -l
+        #     ffmpeg -version
+        #     pkg-config libheif --print-variables
+        #     pwd
+        #     vips copy internal/converter/govips/tests/files/images/gen.jpg internal/converter/govips/tests/files/images/gen.avif
 
         - name: Build Converter
           run: go build -o ./bin/ -v ./...
