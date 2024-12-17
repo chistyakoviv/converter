@@ -40,7 +40,7 @@ jobs:
 
         - name: Install libheif dependencies
           run: |
-            sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265
+            sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265-dev
 
         - name: Build libheif from source
           run: |
