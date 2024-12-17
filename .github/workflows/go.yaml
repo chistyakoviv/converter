@@ -60,10 +60,6 @@ jobs:
               && make -j$(nproc) \
               && sudo make install
 
-        - name: Verify libheif installation
-          run: |
-            pkg-config libheif --print-variables
-
         - name: Build libvips from source
           run: |
             mkdir -p /tmp/vips
@@ -80,10 +76,6 @@ jobs:
             heif-convert --version
             vips --version
             ffmpeg -version
-
-        - name: Verivy avif conversion
-          run: |
-            vips copy internal/converter/govips/tests/files/images/gen.jpg internal/converter/govips/tests/files/images/gen.avif
 
         - name: Build Converter
           run: go build -o ./bin/ -v ./...
