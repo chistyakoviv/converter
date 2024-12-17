@@ -14,20 +14,20 @@ import (
 
 func TestImageConverter(t *testing.T) {
 	var (
-		logger          = dummy.NewDummyLogger()
-		imagesDir       = "files/images"
-		imagesOutputDir = imagesDir + "/output"
-		env             = config.EnvLocal
-		imageConf       = config.Image{
+		logger         = dummy.NewDummyLogger()
+		filesDir       = "files/images"
+		filesOutputDir = filesDir + "/output"
+		env            = config.EnvLocal
+		imageConf      = config.Image{
 			Threads: 4,
 		}
 	)
 
-	outputDirErr := os.MkdirAll(imagesOutputDir, 0777)
+	outputDirErr := os.MkdirAll(filesOutputDir, 0777)
 	require.NoError(t, outputDirErr)
 
 	t.Cleanup(func() {
-		err := os.RemoveAll(imagesOutputDir)
+		err := os.RemoveAll(filesOutputDir)
 		require.NoError(t, err, "Failed to remove images output dir")
 	})
 
@@ -42,56 +42,56 @@ func TestImageConverter(t *testing.T) {
 	cases := []testcase{
 		{
 			name: "Convert jpg to jpg",
-			from: imagesDir + "/gen.jpg",
-			to:   imagesOutputDir + "/gen-jpg-to-jpg.jpg",
+			from: filesDir + "/gen.jpg",
+			to:   filesOutputDir + "/gen-jpg-to-jpg.jpg",
 			conf: nil,
 		},
 		{
 			name: "Convert jpg to png",
-			from: imagesDir + "/gen.jpg",
-			to:   imagesOutputDir + "/gen-jpg-to-png.png",
+			from: filesDir + "/gen.jpg",
+			to:   filesOutputDir + "/gen-jpg-to-png.png",
 			conf: nil,
 		},
 		{
 			name: "Convert jpg to webp",
-			from: imagesDir + "/gen.jpg",
-			to:   imagesOutputDir + "/gen-jpg-to-webp.webp",
+			from: filesDir + "/gen.jpg",
+			to:   filesOutputDir + "/gen-jpg-to-webp.webp",
 			conf: nil,
 		},
 		{
 			name: "Convert jpg to avif",
-			from: imagesDir + "/gen.jpg",
-			to:   imagesOutputDir + "/gen-jpg-to-avif.avif",
+			from: filesDir + "/gen.jpg",
+			to:   filesOutputDir + "/gen-jpg-to-avif.avif",
 			conf: nil,
 		},
 		{
 			name: "Convert png to png",
-			from: imagesDir + "/gen.png",
-			to:   imagesOutputDir + "/gen-png-to-png.png",
+			from: filesDir + "/gen.png",
+			to:   filesOutputDir + "/gen-png-to-png.png",
 			conf: nil,
 		},
 		{
 			name: "Convert png to jpg",
-			from: imagesDir + "/gen.png",
-			to:   imagesOutputDir + "/gen-png-to-jpg.jpg",
+			from: filesDir + "/gen.png",
+			to:   filesOutputDir + "/gen-png-to-jpg.jpg",
 			conf: nil,
 		},
 		{
 			name: "Convert png to webp",
-			from: imagesDir + "/gen.png",
-			to:   imagesOutputDir + "/gen-png-to-webp.webp",
+			from: filesDir + "/gen.png",
+			to:   filesOutputDir + "/gen-png-to-webp.webp",
 			conf: nil,
 		},
 		{
 			name: "Convert png to avif",
-			from: imagesDir + "/gen.png",
-			to:   imagesOutputDir + "/gen-png-to-avif.avif",
+			from: filesDir + "/gen.png",
+			to:   filesOutputDir + "/gen-png-to-avif.avif",
 			conf: nil,
 		},
 		{
 			name: "Unsupported format",
-			from: imagesDir + "/gen.jpg",
-			to:   imagesOutputDir + "/gen-png-to-unsupported.ext",
+			from: filesDir + "/gen.jpg",
+			to:   filesOutputDir + "/gen-png-to-unsupported.ext",
 			err:  "govips: unsupported format: ext",
 			conf: nil,
 		},
@@ -114,7 +114,7 @@ func TestImageConverter(t *testing.T) {
 				}
 			})
 
-			converter := govips.NewImageConverter(logger, cfg)
+			converter := govips.NewImageConverter(cfg, logger)
 
 			err := converter.Convert(tc.from, tc.to, tc.conf)
 			if tc.err != "" {

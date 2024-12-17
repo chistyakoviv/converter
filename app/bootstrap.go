@@ -132,7 +132,7 @@ func bootstrap(ctx context.Context, c di.Container) {
 	})
 
 	c.RegisterSingleton("imageConverter", func(c di.Container) converter.ImageConverter {
-		serv := govips.NewImageConverter(resolveLogger(c), resolveConfig(c))
+		serv := govips.NewImageConverter(resolveConfig(c), resolveLogger(c))
 		dq := resolveDeferredQ(c)
 		logger := resolveLogger(c)
 

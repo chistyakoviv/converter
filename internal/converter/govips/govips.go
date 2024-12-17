@@ -21,7 +21,7 @@ type conv struct {
 	logger *slog.Logger
 }
 
-func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageConverter {
+func NewImageConverter(cfg *config.Config, logger *slog.Logger) converter.ImageConverter {
 	vipsLogger := func(messageDomain string, verbosity vips.LogLevel, message string) {
 		var messageLevelDescription string
 		var loggerFn func(msg string, args ...any)
