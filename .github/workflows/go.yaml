@@ -21,19 +21,24 @@ jobs:
         - name: Install dependencies
           # libaom-dev - AV1 Video Codec Library
           # libheif-dev = HEIF file format decoder
+          # see https://github.com/jcupitt/docker-builds/blob/master/libvips-ubuntu18.04/Dockerfile
           run: |
             sudo apt-get update
-            sudo apt-get install -y libvips-dev libpng-dev libjpeg-dev libheif-dev libaom-dev ffmpeg
+            sudo apt-get install -y software-properties-common build-essential pkg-config libvips-dev
+            sudo apt-get install -y glib-2.0-dev libheif-dev libexpat-dev librsvg2-dev libpng-dev libgif-dev libjpeg-dev libtiff-dev libexif-dev liblcms2-dev liborc-dev libffi-dev
+            sudo apt-get install -y libaom-dev ffmpeg
 
         - name: Verify installation
           run: |
             vips --version
+            vips -l
             ffmpeg -version
+            pkg-config libheif --print-variables
 
         - name: Build Converter
           run: go build -o ./bin/ -v ./...
 
-        - name: Test Auth
+        - name: Test Converter
           run: go test -v ./...
 
   linter:
