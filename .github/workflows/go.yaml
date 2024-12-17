@@ -76,8 +76,10 @@ jobs:
         #     vips -l
         #     ffmpeg -version
         #     pkg-config libheif --print-variables
-        #     pwd
-        #     vips copy internal/converter/govips/tests/files/images/gen.jpg internal/converter/govips/tests/files/images/gen.avif
+
+        - name: Verivy avif conversion
+          run: |
+            vips copy internal/converter/govips/tests/files/images/gen.jpg internal/converter/govips/tests/files/images/gen.avif
 
         - name: Build Converter
           run: go build -o ./bin/ -v ./...
