@@ -34,13 +34,18 @@ jobs:
           # see https://github.com/jcupitt/docker-builds/blob/master/libvips-ubuntu18.04/Dockerfile
           run: |
             sudo apt-get update
-            sudo apt-get install -y meson ninja-build  wget
+            sudo apt-get install -y meson ninja-build wget
             sudo apt-get install -y libglib2.0-dev libexpat1-dev librsvg2-dev libpng-dev libgif-dev libjpeg-dev libtiff-dev libexif-dev liblcms2-dev liborc-dev libffi-dev
             sudo apt-get install -y libaom-dev ffmpeg
 
         - name: Install libheif dependencies
           run: |
             sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265-dev libx264-dev
+
+        # Set environment variables to prioritize custom libraries, otherwise libvips will be linked to a wrong version of libheif
+        - name: Set environment variables
+          run: |
+            echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
         - name: Build libheif from source
           run: |
@@ -70,12 +75,11 @@ jobs:
               && meson compile -C build \
               && sudo meson install -C build
 
-        # - name: Verify installation
-        #   run: |
-        #     vips --version
-        #     vips -l
-        #     ffmpeg -version
-        #     pkg-config libheif --print-variables
+        - name: Verify vips and ffmpeg installation
+          run: |
+            heif-convert --version
+            vips --version
+            ffmpeg -version
 
         - name: Verivy avif conversion
           run: |

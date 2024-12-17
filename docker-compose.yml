@@ -31,3 +31,9 @@ services:
     environment:
       - PG_DSN=postgres://app:secret@converter-pg/app?sslmode=disable
       - GOOSE_MIGRATION_DIR=./migrations
+
+  test:
+    build:
+      dockerfile: ./docker/development/test/Dockerfile
+    volumes:
+      - ./:/app
