@@ -99,40 +99,30 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 
 	toTmp := file.ToTmpFilePath(to)
 
+	var err error
 	switch ext {
 	case "jpg", "jpeg":
-		err := c.toJpeg(from, toTmp, conf)
-		if err != nil {
-			logger.Error("error:", slogger.Err(err))
-			return wrapError(err)
-		}
+		err = c.toJpeg(from, toTmp, conf)
 	case "png":
-		err := c.toPng(from, toTmp, conf)
-		if err != nil {
-			logger.Error("error:", slogger.Err(err))
-			return wrapError(err)
-		}
+		err = c.toPng(from, toTmp, conf)
 	case "webp":
-		err := c.toWebp(from, toTmp, conf)
-		if err != nil {
-			logger.Error("error:", slogger.Err(err))
-			return wrapError(err)
-		}
+		err = c.toWebp(from, toTmp, conf)
 	case "avif":
-		err := c.toAvif(from, toTmp, conf)
-		if err != nil {
-			logger.Error("error:", slogger.Err(err))
-			return wrapError(err)
-		}
+		err = c.toAvif(from, toTmp, conf)
 	default:
 		return wrapError(fmt.Errorf("unsupported format: %s", ext))
 	}
 
-	if err := os.Remove(to); err != nil && !os.IsNotExist(err) {
+	if err != nil {
+		logger.Error("error:", slogger.Err(err))
+		return wrapError(err)
+	}
+
+	if err = os.Remove(to); err != nil && !os.IsNotExist(err) {
 		return wrapError(fmt.Errorf("failed to remove old file: %w", err))
 	}
 
-	if err := os.Rename(toTmp, to); err != nil {
+	if err = os.Rename(toTmp, to); err != nil {
 		return wrapError(fmt.Errorf("failed to rename tmp file: %w", err))
 	}
 
