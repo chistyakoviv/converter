@@ -12,6 +12,8 @@ jobs:
     env:
       VIPS_VERSION: 8.15.1
       VIPS_URL: https://github.com/libvips/libvips/releases/download
+      HEIF_VERSION: 1.19.5
+      HEIF_URL: https://github.com/strukturag/libheif/releases/download
     steps:
         - uses: actions/checkout@v3
 
@@ -21,15 +23,36 @@ jobs:
             go-version: '1.23'
             cache-dependency-path: go.sum
 
-        - name: Install dependencies
+        - name: Install build dependencies
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y software-properties-common build-essential pkg-config git
+
+        - name: Install libvips dependencies
           # libaom-dev - AV1 Video Codec Library
           # libheif-dev = HEIF file format decoder
           # see https://github.com/jcupitt/docker-builds/blob/master/libvips-ubuntu18.04/Dockerfile
           run: |
             sudo apt-get update
-            sudo apt-get install -y software-properties-common build-essential meson ninja-build pkg-config wget
-            sudo apt-get install -y libglib2.0-dev libheif-dev libexpat1-dev librsvg2-dev libpng-dev libgif-dev libjpeg-dev libtiff-dev libexif-dev liblcms2-dev liborc-dev libffi-dev
+            sudo apt-get install -y meson ninja-build  wget
+            sudo apt-get install -y libglib2.0-dev libexpat1-dev librsvg2-dev libpng-dev libgif-dev libjpeg-dev libtiff-dev libexif-dev liblcms2-dev liborc-dev libffi-dev
             sudo apt-get install -y libaom-dev ffmpeg
+
+        - name: Install libheif dependencies
+          run: |
+            sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265
+
+        - name: Build libheif from source
+          run: |
+            mkdir -p /tmp/libheif
+            cd /tmp/libheif
+            wget ${HEIF_URL}/v${HEIF_VERSION}/libheif-${HEIF_VERSION}.tar.xz \
+              && tar -xf libheif-${HEIF_VERSION}.tar.xz \
+              && cd libheif-${HEIF_VERSION} \
+              && mkdir build \
+              && cd build \
+              && cmake --preset=release .. \
+              && make -j$(nproc) \
 
         # - name: Verify libheif decoders and encoders
         #   run: |
