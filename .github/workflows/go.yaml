@@ -40,7 +40,7 @@ jobs:
               && make V=0 \
               && make install \
               && ldconfig
-          working-directory: /usr/local/src
+          working-directory: /tmp
 
         # - name: Verify installation
         #   run: |
