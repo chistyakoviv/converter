@@ -97,29 +97,29 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 	logger := c.logger.With(slog.String("op", op))
 	ext := file.Ext(to)
 
-	tmpFile := file.ToTmpFilePath(to)
+	toTmp := file.ToTmpFilePath(to)
 
 	switch ext {
 	case "jpg", "jpeg":
-		err := c.toJpeg(from, tmpFile, conf)
+		err := c.toJpeg(from, toTmp, conf)
 		if err != nil {
 			logger.Error("error:", slogger.Err(err))
 			return wrapError(err)
 		}
 	case "png":
-		err := c.toPng(from, tmpFile, conf)
+		err := c.toPng(from, toTmp, conf)
 		if err != nil {
 			logger.Error("error:", slogger.Err(err))
 			return wrapError(err)
 		}
 	case "webp":
-		err := c.toWebp(from, tmpFile, conf)
+		err := c.toWebp(from, toTmp, conf)
 		if err != nil {
 			logger.Error("error:", slogger.Err(err))
 			return wrapError(err)
 		}
 	case "avif":
-		err := c.toAvif(from, tmpFile, conf)
+		err := c.toAvif(from, toTmp, conf)
 		if err != nil {
 			logger.Error("error:", slogger.Err(err))
 			return wrapError(err)
@@ -132,7 +132,7 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 		return wrapError(fmt.Errorf("failed to remove old file: %w", err))
 	}
 
-	if err := os.Rename(tmpFile, to); err != nil {
+	if err := os.Rename(toTmp, to); err != nil {
 		return wrapError(fmt.Errorf("failed to rename tmp file: %w", err))
 	}
 
