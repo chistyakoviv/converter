@@ -40,7 +40,7 @@ jobs:
 
         - name: Install libheif dependencies
           run: |
-            sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265-dev
+            sudo apt-get install -y cmake libaom-dev libdav1d-dev libx265-dev libyaml-cpp-dev libssl-dev libde265-dev libx264-dev
 
         - name: Build libheif from source
           run: |
@@ -53,11 +53,11 @@ jobs:
               && cd build \
               && cmake --preset=release .. \
               && make -j$(nproc) \
+              && sudo make install
 
-        # - name: Verify libheif decoders and encoders
-        #   run: |
-        #     heif-convert --list-decoders
-        #     heif-convert --list-encoders
+        - name: Verify libheif installation
+          run: |
+            pkg-config libheif --print-variables
 
         - name: Build libvips from source
           run: |
