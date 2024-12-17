@@ -58,7 +58,8 @@ func NewImageConverter(logger *slog.Logger, cfg *config.Config) converter.ImageC
 			slog.Attr{
 				Key:   "message",
 				Value: slog.StringValue(message),
-			})
+			},
+		)
 	}
 
 	var logLevel vips.LogLevel
