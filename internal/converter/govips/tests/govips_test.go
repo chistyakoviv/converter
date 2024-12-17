@@ -35,6 +35,7 @@ func TestImageConverter(t *testing.T) {
 		name string
 		from string
 		to   string
+		err  string
 		conf converter.ConversionConfig
 	}
 
@@ -87,6 +88,13 @@ func TestImageConverter(t *testing.T) {
 			to:   imagesOutputDir + "/gen-png-to-avif.avif",
 			conf: nil,
 		},
+		{
+			name: "Unsupported format",
+			from: imagesDir + "/gen.jpg",
+			to:   imagesOutputDir + "/gen-png-to-unsupported.ext",
+			err:  "govips: unsupported format: ext",
+			conf: nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -100,16 +108,20 @@ func TestImageConverter(t *testing.T) {
 				Image: imageConf,
 			}
 
-			converter := govips.NewImageConverter(logger, cfg)
-
-			err := converter.Convert(tc.from, tc.to, tc.conf)
-			require.NoError(t, err)
-
 			t.Cleanup(func() {
 				if err := os.Remove(tc.to); err != nil && !os.IsNotExist(err) {
 					require.NoError(t, err, "Failed to remove generated file")
 				}
 			})
+
+			converter := govips.NewImageConverter(logger, cfg)
+
+			err := converter.Convert(tc.from, tc.to, tc.conf)
+			if tc.err != "" {
+				assert.Equal(t, err.Error(), tc.err)
+				return
+			}
+			require.NoError(t, err)
 
 			_, err = os.Stat(tc.to)
 			assert.NoError(t, err, "File %s should exist", tc.to)
