@@ -46,8 +46,8 @@ jobs:
           run: |
             mkdir -p /tmp/libheif
             cd /tmp/libheif
-            wget ${HEIF_URL}/v${HEIF_VERSION}/libheif-${HEIF_VERSION}.tar.xz \
-              && tar -xf libheif-${HEIF_VERSION}.tar.xz \
+            wget ${HEIF_URL}/v${HEIF_VERSION}/libheif-${HEIF_VERSION}.tar.gz \
+              && tar -xf libheif-${HEIF_VERSION}.tar.gz \
               && cd libheif-${HEIF_VERSION} \
               && mkdir build \
               && cd build \
