@@ -49,6 +49,8 @@ func TestScanHandler(t *testing.T) {
 			mockTaskService: func(tc *testcase) service.TaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(false).Once()
+				mockTaskService.On("ProcessScanfs", ctx, "/").Return(nil).Maybe()
+				mockTaskService.On("TryQueueConversion").Return(true).Maybe()
 				return mockTaskService
 			},
 		},
