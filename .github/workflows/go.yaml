@@ -10,7 +10,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     env:
-      VIPS_VERSION: 8.15.1
+      VIPS_VERSION: 8.16.0
       VIPS_URL: https://github.com/libvips/libvips/releases/download
       HEIF_VERSION: 1.19.5
       HEIF_URL: https://github.com/strukturag/libheif/releases/download
