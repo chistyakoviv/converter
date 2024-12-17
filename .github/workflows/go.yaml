@@ -33,8 +33,8 @@ jobs:
 
         - name: Build libvips from source
           run: |
-            wget ${VIPS_URL}/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.gz \
-              && tar xzf vips-${VIPS_VERSION}.tar.gz \
+            wget ${VIPS_URL}/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz \
+              && tar -xf vips-${VIPS_VERSION}.tar.xz \
               && cd vips-${VIPS_VERSION} \
               && ./configure \
               && make V=0 \
