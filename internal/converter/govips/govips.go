@@ -110,7 +110,7 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 	case "avif":
 		err = c.toAvif(from, toTmp, conf)
 	default:
-		return wrapError(fmt.Errorf("unsupported format: %s", ext))
+		err = fmt.Errorf("unsupported format: %s", ext)
 	}
 
 	if err != nil {
