@@ -5,6 +5,24 @@ ENV MOCKERY_INSTALL_VERSION=2.50.0
 
 RUN apk add --no-cache make curl
 
+RUN apk add --no-cache \
+    vips \
+    vips-dev \
+    gcc \
+    g++ \
+    libc-dev \
+    make \
+    pkgconfig \
+    glib-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    libexif-dev \
+    tiff-dev \
+    libheif-dev \
+    aom-dev \
+    ffmpeg
+
 RUN mkdir -p /tmp/mockery && \
     curl -L -o /tmp/mockery/mockery.tar.gz "https://github.com/vektra/mockery/releases/download/v${MOCKERY_INSTALL_VERSION}/mockery_${MOCKERY_INSTALL_VERSION}_Linux_x86_64.tar.gz" && \
     tar -xzf /tmp/mockery/mockery.tar.gz -C /tmp/mockery && \

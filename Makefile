@@ -21,6 +21,7 @@ lint:
 mocks:
 	docker compose run --rm go-cli mockery
 
+.PHONY: tests
 tests:
 	docker compose run --rm converter go test -v ./...
 

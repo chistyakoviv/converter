@@ -17,7 +17,7 @@ import (
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
-func TestConvertHandler(t *testing.T) {
+func TestScanHandler(t *testing.T) {
 	var (
 		ctx    = context.Background()
 		logger = dummy.NewDummyLogger()

@@ -24,7 +24,7 @@ import (
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
-func TestConvertHandler(t *testing.T) {
+func TestDeleteHandler(t *testing.T) {
 	var (
 		errorId    int64 = -1
 		successId  int64 = 1
