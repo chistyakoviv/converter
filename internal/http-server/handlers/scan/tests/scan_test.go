@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/chistyakoviv/converter/internal/constants"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/scan"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/service"
@@ -49,7 +50,7 @@ func TestScanHandler(t *testing.T) {
 			mockTaskService: func(tc *testcase) service.TaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(false).Once()
-				mockTaskService.On("ProcessScanfs", ctx, "/").Return(nil).Maybe()
+				mockTaskService.On("ProcessScanfs", ctx, constants.FilesRootDir).Return(nil).Maybe()
 				mockTaskService.On("TryQueueConversion").Return(true).Maybe()
 				return mockTaskService
 			},
