@@ -10,6 +10,7 @@ packages:
             ConversionQueueService:
             DeletionQueueService:
             TaskService:
+            ConverterService:
     # github.com/chistyakoviv/converter/internal/repository:
         # place your package-specific config here
         # config:

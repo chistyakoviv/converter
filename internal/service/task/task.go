@@ -78,6 +78,8 @@ func (s *serv) ProcessQueues(ctx context.Context) {
 			s.processDeletion(ctx)
 		case <-ctx.Done():
 			s.logger.Info("context done, exiting from task processing")
+			close(s.conversionQueue)
+			close(s.deletionQueue)
 			return
 		}
 	}
