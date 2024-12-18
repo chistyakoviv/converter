@@ -15,7 +15,6 @@ import (
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/scan"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/service/mocks"
-	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
 func TestScanHandler(t *testing.T) {
@@ -38,7 +37,7 @@ func TestScanHandler(t *testing.T) {
 			respError:  "scan is already running",
 			statusCode: http.StatusConflict,
 			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
-				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService := mocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(true).Once()
 				return mockTaskService
 			},
@@ -48,7 +47,7 @@ func TestScanHandler(t *testing.T) {
 			respError:  "",
 			statusCode: http.StatusOK,
 			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
-				mockTaskService := serviceMocks.NewMockTaskService(t)
+				mockTaskService := mocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(false).Once()
 				mockTaskService.On("ProcessScanfs", ctx, constants.FilesRootDir).Return(nil).Maybe()
 				mockTaskService.On("TryQueueConversion").Return(true).Maybe()
