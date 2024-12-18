@@ -14,7 +14,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/constants"
 	"github.com/chistyakoviv/converter/internal/http-server/handlers/scan"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
-	"github.com/chistyakoviv/converter/internal/service"
+	"github.com/chistyakoviv/converter/internal/service/mocks"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
@@ -29,7 +29,7 @@ func TestScanHandler(t *testing.T) {
 		input           string
 		respError       string
 		statusCode      int
-		mockTaskService func(tc *testcase) service.TaskService
+		mockTaskService func(tc *testcase) *mocks.MockTaskService
 	}
 
 	cases := []testcase{
@@ -37,7 +37,7 @@ func TestScanHandler(t *testing.T) {
 			name:       "Failed request: scan is already running",
 			respError:  "scan is already running",
 			statusCode: http.StatusConflict,
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(true).Once()
 				return mockTaskService
@@ -47,7 +47,7 @@ func TestScanHandler(t *testing.T) {
 			name:       "Successful request",
 			respError:  "",
 			statusCode: http.StatusOK,
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("IsScanning").Return(false).Once()
 				mockTaskService.On("ProcessScanfs", ctx, constants.FilesRootDir).Return(nil).Maybe()
@@ -84,6 +84,7 @@ func TestScanHandler(t *testing.T) {
 
 			assert.Equal(t, tc.respError, resp.Error)
 			assert.Equal(t, tc.statusCode, rr.Result().StatusCode)
+			mockTaskService.AssertExpectations(t)
 		})
 	}
 }

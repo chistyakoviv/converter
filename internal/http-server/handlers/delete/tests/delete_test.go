@@ -19,8 +19,8 @@ import (
 	"github.com/chistyakoviv/converter/internal/http-server/request"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
-	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/chistyakoviv/converter/internal/service/deletionq"
+	"github.com/chistyakoviv/converter/internal/service/mocks"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
@@ -41,8 +41,8 @@ func TestDeleteHandler(t *testing.T) {
 		deletionInfo        *model.DeletionInfo
 		deletionReq         *request.DeletionRequest
 		mockValidator       func(tc *testcase) handlers.Validator
-		mockDeletionService func(tc *testcase) service.DeletionQueueService
-		mockTaskService     func(tc *testcase) service.TaskService
+		mockDeletionService func(tc *testcase) *mocks.MockDeletionQueueService
+		mockTaskService     func(tc *testcase) *mocks.MockTaskService
 	}
 
 	cases := []testcase{
@@ -53,17 +53,14 @@ func TestDeleteHandler(t *testing.T) {
 			statusCode: http.StatusBadRequest,
 			mockValidator: func(tc *testcase) handlers.Validator {
 				mockValidator := handlersMocks.NewMockValidator(t)
-				mockValidator.AssertNotCalled(t, "Struct")
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.AssertNotCalled(t, "Add")
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 				return mockTaskService
 			},
 		},
@@ -75,14 +72,12 @@ func TestDeleteHandler(t *testing.T) {
 			mockValidator: func(tc *testcase) handlers.Validator {
 				return validation
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.AssertNotCalled(t, "Add")
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 				return mockTaskService
 			},
 		},
@@ -98,14 +93,13 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, deletionq.ErrPathAlreadyExist).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 				return mockTaskService
 			},
 		},
@@ -121,14 +115,13 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, deletionq.ErrFileDoesNotExist).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 				return mockTaskService
 			},
 		},
@@ -144,14 +137,13 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, errors.New("unknown error")).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.AssertNotCalled(t, "TryQueueConversion")
 				return mockTaskService
 			},
 		},
@@ -167,12 +159,12 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) service.DeletionQueueService {
+			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(successId, nil).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) service.TaskService {
+			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("TryQueueDeletion").Return(true).Once()
 				return mockTaskService
@@ -211,6 +203,8 @@ func TestDeleteHandler(t *testing.T) {
 
 			assert.Equal(t, tc.respError, resp.Error)
 			assert.Equal(t, tc.statusCode, rr.Result().StatusCode)
+			mockDeletionService.AssertExpectations(t)
+			mockTaskService.AssertExpectations(t)
 		})
 	}
 }
