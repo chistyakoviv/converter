@@ -20,8 +20,8 @@ import (
 
 func TestTaskService(t *testing.T) {
 	var (
-		logger   = dummy.NewDummyLogger()
-		fileInfo = &model.Conversion{
+		logger                = dummy.NewDummyLogger()
+		conversionPendingInfo = &model.Conversion{
 			Id:       1,
 			Fullpath: "/path/to/file.ext",
 			Path:     "/path/to",
@@ -37,10 +37,26 @@ func TestTaskService(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: sql.NullTime{},
 		}
+		conversionDoneInfo = &model.Conversion{
+			Id:       1,
+			Fullpath: "/path/to/file.ext",
+			Path:     "/path/to",
+			Filestem: "file",
+			Ext:      "ext",
+			ConvertTo: []model.ConvertTo{
+				{
+					Ext: "jpg",
+				},
+			},
+			Status:    model.ConversionStatusDone,
+			ErrorCode: 0,
+			CreatedAt: time.Now(),
+			UpdatedAt: sql.NullTime{},
+		}
 		deletionInfo = &model.Deletion{
 			Id:        1,
 			Fullpath:  "/path/to/file.ext",
-			Status:    model.ConversionStatusPending,
+			Status:    model.DeletionStatusPending,
 			ErrorCode: 0,
 			CreatedAt: time.Now(),
 			UpdatedAt: sql.NullTime{},
@@ -75,7 +91,7 @@ func TestTaskService(t *testing.T) {
 			},
 		},
 		{
-			name:                "No tasks to process",
+			name:                "No conversion tasks to process",
 			conversionQeueueLen: 1,
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
@@ -111,7 +127,7 @@ func TestTaskService(t *testing.T) {
 		{
 			name:                "Cancel task enqueued for deletion",
 			conversionQeueueLen: 1,
-			fileInfo:            fileInfo,
+			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
@@ -134,7 +150,7 @@ func TestTaskService(t *testing.T) {
 		{
 			name:                "Abort task execution when deletion info retrieval fails",
 			conversionQeueueLen: 1,
-			fileInfo:            fileInfo,
+			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
@@ -154,7 +170,7 @@ func TestTaskService(t *testing.T) {
 		{
 			name:                "Abort task execution when conversion fails",
 			conversionQeueueLen: 1,
-			fileInfo:            fileInfo,
+			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
@@ -178,7 +194,7 @@ func TestTaskService(t *testing.T) {
 		{
 			name:                "Successful conversion task execution",
 			conversionQeueueLen: 1,
-			fileInfo:            fileInfo,
+			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
@@ -196,6 +212,129 @@ func TestTaskService(t *testing.T) {
 			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
 				mockConverterService := serviceMocks.NewMockConverterService(t)
 				mockConverterService.On("Convert", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo).Return(nil).Once()
+				return mockConverterService
+			},
+		},
+		{
+			name:             "No deletion tasks to process",
+			deletionQueueLen: 1,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+		{
+			name:             "Unknown error when popping from deletion queue",
+			deletionQueueLen: 1,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, errors.New("unknown error")).Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+		{
+			name:             "Cancel a task that is not present in the conversion queue",
+			deletionQueueLen: 1,
+			fileInfo:         conversionPendingInfo,
+			deletionInfo:     deletionInfo,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(nil, db.ErrNotFound).Once()
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath, service.ErrFailedToRemoveFile).
+					Return(errors.New("simulate error to prevent next iteration")).
+					Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+		{
+			name:             "Abort task execution when conversion info retrieval fails",
+			deletionQueueLen: 1,
+			fileInfo:         conversionPendingInfo,
+			deletionInfo:     deletionInfo,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(nil, errors.New("unknown error")).Once()
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+		{
+			name:             "Attempt to mark as done a deletion task for a file currently pending conversion",
+			deletionQueueLen: 1,
+			fileInfo:         conversionPendingInfo,
+			deletionInfo:     deletionInfo,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(tc.fileInfo, nil).Once()
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
+					Return(errors.New("simulate error to prevent next iteration")).
+					Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+		{
+			name:             "Successful conversion task execution",
+			deletionQueueLen: 1,
+			fileInfo:         conversionDoneInfo,
+			deletionInfo:     deletionInfo,
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(tc.fileInfo, nil).Once()
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
+					Return(errors.New("simulate error to prevent next iteration")).
+					Once()
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
 				return mockConverterService
 			},
 		},
