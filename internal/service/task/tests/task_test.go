@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestTaskService(t *testing.T) {
+func TestTaskServiceProcessQueues(t *testing.T) {
 	var (
 		logger                = dummy.NewDummyLogger()
 		conversionPendingInfo = &model.Conversion{
@@ -390,6 +390,105 @@ func TestTaskService(t *testing.T) {
 			cancel()
 
 			wg.Wait()
+
+			mockConversionService.AssertExpectations(t)
+			mockDeletionService.AssertExpectations(t)
+			mockConverterService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestTaskServiceProcessScanfs(t *testing.T) {
+	var (
+		successId int64 = 1
+		logger          = dummy.NewDummyLogger()
+	)
+
+	type testcase struct {
+		name                  string
+		mockConversionService func(tc *testcase) *serviceMocks.MockConversionQueueService
+		mockDeletionService   func(tc *testcase) *serviceMocks.MockDeletionQueueService
+		mockConverterService  func(tc *testcase) *serviceMocks.MockConverterService
+	}
+
+	cases := []testcase{
+		{
+			name: "Successful scanfs task execution",
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+				mockConversionService.
+					On(
+						"Add",
+						mock.AnythingOfType("*context.cancelCtx"),
+						&model.ConversionInfo{
+							Fullpath: "/files/images/gen.jpg",
+							Path:     "/files/images",
+							Filestem: "gen",
+							Ext:      "jpg",
+						},
+					).
+					Return(successId, nil).
+					Once()
+				mockConversionService.
+					On(
+						"Add",
+						mock.AnythingOfType("*context.cancelCtx"),
+						&model.ConversionInfo{
+							Fullpath: "/files/images/gen.png",
+							Path:     "/files/images",
+							Filestem: "gen",
+							Ext:      "png",
+						},
+					).
+					Return(successId, nil).
+					Once()
+				mockConversionService.
+					On(
+						"Add",
+						mock.AnythingOfType("*context.cancelCtx"),
+						&model.ConversionInfo{
+							Fullpath: "/files/videos/gen.mp4",
+							Path:     "/files/videos",
+							Filestem: "gen",
+							Ext:      "mp4",
+						},
+					).
+					Return(successId, nil).
+					Once()
+				return mockConversionService
+			},
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+				return mockDeletionService
+			},
+			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
+				mockConverterService := serviceMocks.NewMockConverterService(t)
+				return mockConverterService
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, _ := context.WithCancel(context.Background())
+
+			mockConversionService := tc.mockConversionService(&tc)
+			mockDeletionService := tc.mockDeletionService(&tc)
+			mockConverterService := tc.mockConverterService(&tc)
+
+			taskService := task.NewService(
+				logger,
+				mockConversionService,
+				mockDeletionService,
+				mockConverterService,
+			)
+
+			err := taskService.ProcessScanfs(ctx, "files")
+			assert.NoError(t, err)
 
 			mockConversionService.AssertExpectations(t)
 			mockDeletionService.AssertExpectations(t)
