@@ -474,7 +474,7 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, _ := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(context.Background())
 
 			mockConversionService := tc.mockConversionService(&tc)
 			mockDeletionService := tc.mockDeletionService(&tc)
@@ -488,6 +488,9 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 			)
 
 			err := taskService.ProcessScanfs(ctx, "files")
+
+			cancel()
+
 			assert.NoError(t, err)
 
 			mockConversionService.AssertExpectations(t)
