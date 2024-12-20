@@ -19,8 +19,8 @@ func TestAddToConversionQueue(t *testing.T) {
 		ctx                     = context.Background()
 		errorId           int64 = -1
 		successId         int64 = 0
-		configPath              = "/go/src/github.com/chistyakoviv/converter/config/local.yaml"
-		defaultsPath            = "/go/src/github.com/chistyakoviv/converter/config/defaults.yaml"
+		configPath              = "config/local.yaml"
+		defaultsPath            = "config/defaults.yaml"
 		defaultCfg              = config.MustLoad(configPath, defaultsPath)
 		jpgConversionInfo       = func() *model.ConversionInfo {
 			// Generate models inside a function, because the conversion queue modifies the model passed to the Add method

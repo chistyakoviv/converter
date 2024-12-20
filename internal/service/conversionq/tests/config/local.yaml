@@ -1,0 +1,24 @@
+env: "local" # local, dev, prod
+database:
+  dsn: "postgresql://app:secret@converter-pg:5432/app?sslmode=disable"
+http_server:
+  address: "0.0.0.0:80"
+  read_timeout: 4s
+  write_timeout: 4s
+  idle_timeout: 60s
+task:
+  check_timeout: 5m
+image:
+  default_formats:
+    - ext: "webp"
+  threads: 4
+video:
+  default_formats: 
+    - ext: "webm"
+      optional:
+        replace_orig_ext: true
+      conv_conf:
+        c:v: "libvpx-vp9"
+        c:a: "libopus"
+        crf: "40"
+  threads: 4
