@@ -55,12 +55,6 @@ func TestAddToConversionQueue(t *testing.T) {
 				Ext:      "mp4",
 			}
 		}
-		// pngConversionInfo = &model.ConversionInfo{
-		// 	Fullpath: "/files/images/gen.png",
-		// 	Path:     "/files/images",
-		// 	Filestem: "gen",
-		// 	Ext:      "png",
-		// }
 	)
 
 	type testcase struct {
