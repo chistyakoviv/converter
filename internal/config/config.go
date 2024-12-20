@@ -59,6 +59,7 @@ type VideoDefaults struct {
 func MustLoad(args ...interface{}) *Config {
 	var (
 		cfg          Config
+		dfs          Defaults
 		configPath   string
 		defaultsPath string
 	)
@@ -96,12 +97,11 @@ func MustLoad(args ...interface{}) *Config {
 		log.Fatalf("failed to load config from env: %v", err)
 	}
 
-	var dfs Defaults
-
 	if defaultsPath == "" {
 		defaultsPath = os.Getenv("DEFAULTS_PATH")
 	}
 
+	// Defaults are empty by default and are left unchanged if no path is provided
 	if defaultsPath != "" {
 		if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
 			log.Fatalf("file with defaults %s does not exist", defaultsPath)
