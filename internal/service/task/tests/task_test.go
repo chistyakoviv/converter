@@ -133,8 +133,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
 				mockConversionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath, service.ErrFileQueuedForDeletion).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockConversionService
 			},
 			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
@@ -176,8 +177,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
 				mockConversionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath, service.ErrUnableToConvertFile).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockConversionService
 			},
 			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
@@ -200,8 +202,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
 				mockConversionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockConversionService
 			},
 			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
@@ -263,8 +266,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
 				mockDeletionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath, service.ErrFailedToRemoveFile).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockDeletionService
 			},
 			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
@@ -306,8 +310,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
 				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockDeletionService
 			},
 			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
@@ -329,8 +334,9 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
 				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
-					Return(errors.New("simulate error to prevent next iteration")).
+					Return(nil).
 					Once()
+				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
 				return mockDeletionService
 			},
 			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
