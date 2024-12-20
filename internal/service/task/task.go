@@ -252,7 +252,6 @@ func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
 					return nil
 				}
 				finfo := file.ExtractInfo(src)
-				fmt.Printf("finfo: %+v\n", model.ToConversionInfoFromFileInfo(finfo))
 				_, err = s.conversionQueueService.Add(ctx, model.ToConversionInfoFromFileInfo(finfo))
 				if err != nil {
 					s.logger.Error("failed to enqueue conversion while scanning filesystem", slogger.Err(err))
