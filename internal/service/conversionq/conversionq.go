@@ -66,16 +66,16 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		if info.ConvertTo == nil {
 			return -1, fmt.Errorf("target formats not specified: %w", ErrEmptyTargetFormatList)
 		}
-	} else {
-		var unsupportedFormats []string
-		for _, entry := range info.ConvertTo {
-			if !isConvertible(info.Ext, entry.Ext) {
-				unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", entry.Ext))
-			}
+	}
+
+	var unsupportedFormats []string
+	for _, entry := range info.ConvertTo {
+		if !isConvertible(info.Ext, entry.Ext) {
+			unsupportedFormats = append(unsupportedFormats, fmt.Sprintf("'%s'", entry.Ext))
 		}
-		if len(unsupportedFormats) > 0 {
-			return -1, fmt.Errorf("conversion from '%s' to %s: %w", info.Ext, strings.Join(unsupportedFormats, ", "), ErrInvalidConversionFormat)
-		}
+	}
+	if len(unsupportedFormats) > 0 {
+		return -1, fmt.Errorf("conversion from '%s' to %s: %w", info.Ext, strings.Join(unsupportedFormats, ", "), ErrInvalidConversionFormat)
 	}
 
 	var id int64
