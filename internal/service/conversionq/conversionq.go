@@ -32,6 +32,7 @@ func NewService(
 	}
 }
 
+// The method may modify the conversion info
 func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, error) {
 	src, err := info.AbsoluteSourcePath()
 	if err != nil {
