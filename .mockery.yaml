@@ -11,12 +11,15 @@ packages:
             DeletionQueueService:
             TaskService:
             ConverterService:
-    # github.com/chistyakoviv/converter/internal/repository:
+    github.com/chistyakoviv/converter/internal/repository:
         # place your package-specific config here
-        # config:
-        # interfaces:
-        #     # select the interfaces you want mocked
-        #     ConversionQueueRepository:
-        #         # Modify package-level config for this specific interface (if applicable)
-        #         config:
-        #     DeletionQueueRepository:
+        config:
+        interfaces:
+            # select the interfaces you want mocked
+            ConversionQueueRepository:
+                # Modify package-level config for this specific interface (if applicable)
+                config:
+            DeletionQueueRepository:
+    github.com/chistyakoviv/converter/internal/db:
+        interfaces:
+            TxManager:
