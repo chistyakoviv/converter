@@ -56,10 +56,26 @@ type VideoDefaults struct {
 }
 
 // Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
-func MustLoad() *Config {
-	var cfg Config
+func MustLoad(args ...interface{}) *Config {
+	var (
+		cfg          Config
+		configPath   string
+		defaultsPath string
+	)
 
-	configPath := os.Getenv("CONFIG_PATH")
+	// First argument is config path
+	// Second argument is defaults path
+	switch len(args) {
+	case 2:
+		defaultsPath = args[1].(string)
+		fallthrough
+	case 1:
+		configPath = args[0].(string)
+	}
+
+	if configPath == "" {
+		configPath = os.Getenv("CONFIG_PATH")
+	}
 
 	if configPath != "" {
 		// log.Fatal("CONFIG_PATH is not set")
@@ -82,7 +98,9 @@ func MustLoad() *Config {
 
 	var dfs Defaults
 
-	defaultsPath := os.Getenv("DEFAULTS_PATH")
+	if defaultsPath == "" {
+		defaultsPath = os.Getenv("DEFAULTS_PATH")
+	}
 
 	if defaultsPath != "" {
 		if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
