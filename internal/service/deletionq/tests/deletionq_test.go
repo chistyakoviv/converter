@@ -19,13 +19,13 @@ import (
 
 var (
 	ctx          = context.Background()
+	logger       = dummy.NewDummyLogger()
 	configPath   = "config/local.yaml"
 	defaultsPath = "config/defaults.yaml"
 )
 
 func TestAddToConversionQueue(t *testing.T) {
 	var (
-		logger          = dummy.NewDummyLogger()
 		errorId   int64 = -1
 		successId int64 = 0
 	)
@@ -118,7 +118,6 @@ func TestAddToConversionQueue(t *testing.T) {
 
 func TestPopFromDeletionQueue(t *testing.T) {
 	var (
-		logger   = dummy.NewDummyLogger()
 		deletion = &model.Deletion{
 			Fullpath: "/files/images/gen.jpg",
 		}
@@ -205,7 +204,6 @@ func TestPopFromDeletionQueue(t *testing.T) {
 
 func TestGetFromDeletionQueue(t *testing.T) {
 	var (
-		logger   = dummy.NewDummyLogger()
 		deletion = &model.Deletion{
 			Fullpath: "/files/images/gen.jpg",
 		}
@@ -294,10 +292,6 @@ func TestGetFromDeletionQueue(t *testing.T) {
 }
 
 func TestMarkAsDoneForDeletionQueue(t *testing.T) {
-	var (
-		logger = dummy.NewDummyLogger()
-	)
-
 	type testcase struct {
 		name                     string
 		err                      error
@@ -377,10 +371,6 @@ func TestMarkAsDoneForDeletionQueue(t *testing.T) {
 }
 
 func TestMarkAsCanceledForDeletionQueue(t *testing.T) {
-	var (
-		logger = dummy.NewDummyLogger()
-	)
-
 	type testcase struct {
 		name                     string
 		err                      error
