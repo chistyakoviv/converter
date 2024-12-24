@@ -10,3 +10,11 @@ video:
         c:v: "libvpx-vp9"
         c:a: "libopus"
         crf: "40"
+    # - ext: "webm"
+    #   optional:
+    #     replace_orig_ext: true
+    #     suffix: "-av1"
+    #   conv_conf:
+    #     c:v: "libaom-av1"
+    #     c:a: "libopus"
+    #     crf: "40"
