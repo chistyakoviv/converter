@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestConvert(t *testing.T) {
+func TestConverterService(t *testing.T) {
 	wd, err := os.Getwd()
 
 	if err != nil {
