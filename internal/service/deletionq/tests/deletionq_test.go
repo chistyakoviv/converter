@@ -93,7 +93,10 @@ func TestAddToConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := deletionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				logger,
 				mockTxManager,
 				mockDeletionRepository,
@@ -179,7 +182,10 @@ func TestPopFromDeletionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := deletionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				logger,
 				mockTxManager,
 				mockDeletionRepository,
@@ -268,7 +274,10 @@ func TestGetFromDeletionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := deletionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				logger,
 				mockTxManager,
 				mockDeletionRepository,
@@ -348,7 +357,10 @@ func TestMarkAsDoneForDeletionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := deletionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				logger,
 				mockTxManager,
 				mockDeletionRepository,
@@ -430,7 +442,10 @@ func TestMarkAsCanceledForDeletionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := deletionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				logger,
 				mockTxManager,
 				mockDeletionRepository,

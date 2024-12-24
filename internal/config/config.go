@@ -55,8 +55,13 @@ type VideoDefaults struct {
 	Formats []model.ConvertTo `yaml:"formats"`
 }
 
-// Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown
-func MustLoad(args ...interface{}) *Config {
+type ConfigOptions struct {
+	ConfigPath   string
+	DefaultsPath string
+}
+
+// Functions that start with the Must prefix require that the config is loaded, otherwise panic will be thrown.
+func MustLoad(opts *ConfigOptions) *Config {
 	var (
 		cfg          Config
 		dfs          Defaults
@@ -64,14 +69,9 @@ func MustLoad(args ...interface{}) *Config {
 		defaultsPath string
 	)
 
-	// First argument is config path
-	// Second argument is defaults path
-	switch len(args) {
-	case 2:
-		defaultsPath = args[1].(string)
-		fallthrough
-	case 1:
-		configPath = args[0].(string)
+	if opts != nil {
+		configPath = opts.ConfigPath
+		defaultsPath = opts.DefaultsPath
 	}
 
 	if configPath == "" {
@@ -81,18 +81,18 @@ func MustLoad(args ...interface{}) *Config {
 	if configPath != "" {
 		// log.Fatal("CONFIG_PATH is not set")
 
-		// check if file exists
+		// check if file exists.
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			log.Fatalf("config file %s does not exist", configPath)
 		}
 
-		// Read from file
+		// Read from file.
 		if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 			log.Fatalf("failed to load config from %s: %v", configPath, err)
 		}
 	}
 
-	// Read from environment
+	// Load configuration from the environment, overriding any previously loaded config file values.
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("failed to load config from env: %v", err)
 	}
@@ -101,7 +101,7 @@ func MustLoad(args ...interface{}) *Config {
 		defaultsPath = os.Getenv("DEFAULTS_PATH")
 	}
 
-	// Defaults are empty by default and are left unchanged if no path is provided
+	// Defaults are empty by default and are left unchanged if no path is provided.
 	if defaultsPath != "" {
 		if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
 			log.Fatalf("file with defaults %s does not exist", defaultsPath)

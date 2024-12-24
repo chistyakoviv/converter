@@ -19,7 +19,7 @@ func TestConverterService(t *testing.T) {
 	wd, err := os.Getwd()
 
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to get working directory: %s", err)
 	}
 
 	var (
@@ -154,7 +154,10 @@ func TestConverterService(t *testing.T) {
 			mockVideoConverter := tc.mockVideoConverter(&tc)
 
 			serv, _ := converter.NewService(
-				config.MustLoad(tc.configPath, tc.defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   tc.configPath,
+					DefaultsPath: tc.defaultsPath,
+				}),
 				logger,
 				mockImageConverter,
 				mockVideoConverter,

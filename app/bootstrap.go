@@ -34,7 +34,7 @@ import (
 
 func bootstrap(ctx context.Context, c di.Container) {
 	c.RegisterSingleton("config", func(c di.Container) *config.Config {
-		cfg := config.MustLoad()
+		cfg := config.MustLoad(nil)
 		return cfg
 	})
 

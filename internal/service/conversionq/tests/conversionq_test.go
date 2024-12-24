@@ -24,10 +24,13 @@ var (
 
 func TestAddToConversionQueue(t *testing.T) {
 	var (
-		errorId           int64 = -1
-		successId         int64 = 0
-		defaultCfg              = config.MustLoad(configPath, defaultsPath)
-		jpgConversionInfo       = func() *model.ConversionInfo {
+		errorId    int64 = -1
+		successId  int64 = 0
+		defaultCfg       = config.MustLoad(&config.ConfigOptions{
+			ConfigPath:   configPath,
+			DefaultsPath: defaultsPath,
+		})
+		jpgConversionInfo = func() *model.ConversionInfo {
 			// Generate models inside a function, because the conversion queue modifies the model passed to the Add method
 			return &model.ConversionInfo{
 				Fullpath: "/files/images/gen.jpg",
@@ -213,7 +216,10 @@ func TestAddToConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := conversionq.NewService(
-				config.MustLoad(tc.configPath, tc.defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   tc.configPath,
+					DefaultsPath: tc.defaultsPath,
+				}),
 				mockTxManager,
 				mockConversionRepository,
 			)
@@ -293,7 +299,10 @@ func TestPopFromConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := conversionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				mockTxManager,
 				mockConversionRepository,
 			)
@@ -372,7 +381,10 @@ func TestGetFromConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := conversionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				mockTxManager,
 				mockConversionRepository,
 			)
@@ -439,7 +451,10 @@ func TestMarkAsDoneForConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := conversionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				mockTxManager,
 				mockConversionRepository,
 			)
@@ -508,7 +523,10 @@ func TestMarkAsCanceledForConversionQueue(t *testing.T) {
 			mockTxManager := tc.mockTxManager(&tc)
 
 			serv := conversionq.NewService(
-				config.MustLoad(configPath, defaultsPath),
+				config.MustLoad(&config.ConfigOptions{
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
+				}),
 				mockTxManager,
 				mockConversionRepository,
 			)
