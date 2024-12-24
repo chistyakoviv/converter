@@ -16,7 +16,6 @@ import (
 )
 
 func TestConverterService(t *testing.T) {
-	t.Skip("Skipping converter service test")
 	wd, err := os.Getwd()
 
 	if err != nil {
@@ -24,16 +23,16 @@ func TestConverterService(t *testing.T) {
 	}
 
 	var (
-		ctx    = context.Background()
-		logger = dummy.NewDummyLogger()
+		ctx          = context.Background()
+		logger       = dummy.NewDummyLogger()
+		configPath   = "config/local.yaml"
+		defaultsPath = "config/defaults.yaml"
 	)
 
 	type testcase struct {
 		name               string
 		conversion         *model.Conversion
 		err                string
-		configPath         string
-		defaultsPath       string
 		mockImageConverter func(tc *testcase) *converterMocks.MockImageConverter
 		mockVideoConverter func(tc *testcase) *converterMocks.MockVideoConverter
 	}
@@ -156,8 +155,8 @@ func TestConverterService(t *testing.T) {
 
 			serv, _ := converter.NewService(
 				config.MustLoad(&config.ConfigOptions{
-					ConfigPath:   tc.configPath,
-					DefaultsPath: tc.defaultsPath,
+					ConfigPath:   configPath,
+					DefaultsPath: defaultsPath,
 				}),
 				logger,
 				mockImageConverter,
