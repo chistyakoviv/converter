@@ -47,10 +47,10 @@ func NewService(
 
 func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 	src, err := info.AbsoluteSourcePath()
-	s.logger.Debug("convert", slog.String("src", src))
 	if err != nil {
 		return service.NewConverterError(err.Error(), service.ErrUnableToConvertFile)
 	}
+	s.logger.Debug("convert", slog.String("src", src))
 
 	if !file.Exists(src) {
 		return service.NewConverterError(fmt.Sprintf("file '%s' does not exist", src), service.ErrFileDoesNotExist)
@@ -82,7 +82,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 			return service.NewConverterError(filetypeErr.Error(), service.ErrInvalidConversionFormat)
 		}
 		if !imageOk && !videoOk {
-			return service.NewConverterError(fmt.Sprintf("the file is not an image or video: %s", info.Fullpath), service.ErrWrongSourceFile)
+			return service.NewConverterError(fmt.Sprintf("the file is not an image or video: %s", src), service.ErrWrongSourceFile)
 		}
 	}
 	return nil
