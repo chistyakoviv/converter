@@ -63,6 +63,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		}
 		var filetypeErr error
 		var imageOk, videoOk bool
+		// TODO: test convfig merging
 		if imageOk, filetypeErr = file.IsImage(info.Fullpath); imageOk {
 			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Key()], entry.ConvConf)
 			if err := s.imageConverter.Convert(src, dest, mergedConf); err != nil {
