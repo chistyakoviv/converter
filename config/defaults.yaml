@@ -6,6 +6,7 @@ video:
     - ext: "webm"
       optional:
         replace_orig_ext: true
+        suffix: ".vp9"
       conv_conf:
         c:v: "libvpx-vp9"
         c:a: "libopus"
@@ -13,7 +14,7 @@ video:
     # - ext: "webm"
     #   optional:
     #     replace_orig_ext: true
-    #     suffix: "-av1"
+    #     suffix: ".av1"
     #   conv_conf:
     #     c:v: "libaom-av1"
     #     c:a: "libopus"

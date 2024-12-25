@@ -30,10 +30,10 @@ func NewService(
 	imageConfigs := make(map[string]converter.ConversionConfig)
 	videoConfigs := make(map[string]converter.ConversionConfig)
 	for _, entry := range cfg.Defaults.Image.Formats {
-		imageConfigs[entry.Ext] = entry.ConvConf
+		imageConfigs[entry.Key()] = entry.ConvConf
 	}
 	for _, entry := range cfg.Defaults.Video.Formats {
-		videoConfigs[entry.Ext] = entry.ConvConf
+		videoConfigs[entry.Key()] = entry.ConvConf
 	}
 	return &serv{
 		cfg:            cfg,
@@ -64,7 +64,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		var filetypeErr error
 		var imageOk, videoOk bool
 		if imageOk, filetypeErr = file.IsImage(info.Fullpath); imageOk {
-			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Ext], entry.ConvConf)
+			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Key()], entry.ConvConf)
 			if err := s.imageConverter.Convert(src, dest, mergedConf); err != nil {
 				return service.NewConverterError(err.Error(), service.ErrUnableToConvertFile)
 			}
@@ -73,7 +73,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 			return service.NewConverterError(filetypeErr.Error(), service.ErrInvalidConversionFormat)
 		}
 		if videoOk, filetypeErr = file.IsVideo(info.Fullpath); videoOk {
-			mergedConf := converter.MergeConfigs(s.videoConfigs[entry.Ext], entry.ConvConf)
+			mergedConf := converter.MergeConfigs(s.videoConfigs[entry.Key()], entry.ConvConf)
 			if err := s.videoConverter.Convert(src, dest, mergedConf); err != nil {
 				return service.NewConverterError(err.Error(), service.ErrUnableToConvertFile)
 			}

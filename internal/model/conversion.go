@@ -108,6 +108,14 @@ type ConvertTo struct {
 	Optional map[string]interface{} `json:"optional"`  // Catch-all for other fields
 }
 
+func (item *ConvertTo) Key() string {
+	key := item.Ext
+	if suffix, ok := item.Optional["suffix"].(string); ok {
+		key += ";" + suffix
+	}
+	return key
+}
+
 // UnmarshalYAML implements custom unmarshaling for ConvertTo
 func (item *ConvertTo) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// First, we unmarshal into a map to capture all fields
