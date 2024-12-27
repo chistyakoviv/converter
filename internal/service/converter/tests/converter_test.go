@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"github.com/chistyakoviv/converter/internal/config"
+	"github.com/chistyakoviv/converter/internal/converter"
 	converterMocks "github.com/chistyakoviv/converter/internal/converter/mocks"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
-	"github.com/chistyakoviv/converter/internal/service/converter"
+	converterService "github.com/chistyakoviv/converter/internal/service/converter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -33,6 +34,8 @@ func TestConverterService(t *testing.T) {
 		name               string
 		conversion         *model.Conversion
 		err                string
+		configPath         string
+		defaultsPath       string
 		mockImageConverter func(tc *testcase) *converterMocks.MockImageConverter
 		mockVideoConverter func(tc *testcase) *converterMocks.MockVideoConverter
 	}
@@ -51,7 +54,9 @@ func TestConverterService(t *testing.T) {
 					},
 				},
 			},
-			err: fmt.Sprintf("file '%s/files/images/non-existent.jpg' does not exist", wd),
+			err:          fmt.Sprintf("file '%s/files/images/non-existent.jpg' does not exist", wd),
+			configPath:   configPath,
+			defaultsPath: defaultsPath,
 			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
 				mockImageConverter := converterMocks.NewMockImageConverter(t)
 				return mockImageConverter
@@ -74,7 +79,9 @@ func TestConverterService(t *testing.T) {
 					},
 				},
 			},
-			err: fmt.Sprintf("the file is not an image or video: %s/files/other/test.txt", wd),
+			err:          fmt.Sprintf("the file is not an image or video: %s/files/other/test.txt", wd),
+			configPath:   configPath,
+			defaultsPath: defaultsPath,
 			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
 				mockImageConverter := converterMocks.NewMockImageConverter(t)
 				return mockImageConverter
@@ -97,6 +104,8 @@ func TestConverterService(t *testing.T) {
 					},
 				},
 			},
+			configPath:   configPath,
+			defaultsPath: defaultsPath,
 			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
 				mockImageConverter := converterMocks.NewMockImageConverter(t)
 				src, _ := tc.conversion.AbsoluteSourcePath()
@@ -127,6 +136,8 @@ func TestConverterService(t *testing.T) {
 					},
 				},
 			},
+			configPath:   configPath,
+			defaultsPath: defaultsPath,
 			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
 				mockImageConverter := converterMocks.NewMockImageConverter(t)
 				return mockImageConverter
@@ -144,6 +155,127 @@ func TestConverterService(t *testing.T) {
 				return mockVideoConverter
 			},
 		},
+		{
+			name: "Merge video configuration of 2 formats with suffixes",
+			conversion: &model.Conversion{
+				Fullpath: "/files/videos/gen.mp4",
+				Path:     "/files/videos",
+				Filestem: "gen",
+				Ext:      "mp4",
+				ConvertTo: []model.ConvertTo{
+					{
+						Ext: "webm",
+						Optional: map[string]interface{}{
+							"replace_orig_ext": true,
+							"suffix":           ".vp9",
+						},
+					},
+					{
+						Ext: "webm",
+						Optional: map[string]interface{}{
+							"replace_orig_ext": true,
+							"suffix":           ".av1",
+						},
+						ConvConf: map[string]interface{}{
+							"crf": "50",
+						},
+					},
+				},
+			},
+			configPath:   configPath,
+			defaultsPath: "config/defaults_suffixed.yaml",
+			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
+				mockImageConverter := converterMocks.NewMockImageConverter(t)
+				return mockImageConverter
+			},
+			mockVideoConverter: func(tc *testcase) *converterMocks.MockVideoConverter {
+				mockVideoConverter := converterMocks.NewMockVideoConverter(t)
+				src, _ := tc.conversion.AbsoluteSourcePath()
+				destVP9, _ := tc.conversion.AbsoluteDestinationPath(tc.conversion.ConvertTo[0])
+				destAV1, _ := tc.conversion.AbsoluteDestinationPath(tc.conversion.ConvertTo[1])
+				mockVideoConverter.On(
+					"Convert",
+					src,
+					destVP9,
+					converter.ConversionConfig{
+						"c:v": "libvpx-vp9",
+						"c:a": "libopus",
+						"crf": "35",
+					},
+				).Return(nil).Once()
+				mockVideoConverter.On(
+					"Convert",
+					src,
+					destAV1,
+					converter.ConversionConfig{
+						"c:v": "libaom-av1",
+						"c:a": "libopus",
+						"crf": "50",
+					},
+				).Return(nil).Once()
+				return mockVideoConverter
+			},
+		},
+		{
+			name: "Merge video configuration of 2 formats with and without suffix",
+			conversion: &model.Conversion{
+				Fullpath: "/files/videos/gen.mp4",
+				Path:     "/files/videos",
+				Filestem: "gen",
+				Ext:      "mp4",
+				ConvertTo: []model.ConvertTo{
+					{
+						Ext: "webm",
+						Optional: map[string]interface{}{
+							"replace_orig_ext": true,
+						},
+					},
+					{
+						Ext: "webm",
+						Optional: map[string]interface{}{
+							"replace_orig_ext": true,
+							"suffix":           ".av1",
+						},
+						ConvConf: map[string]interface{}{
+							"crf": "50",
+						},
+					},
+				},
+			},
+			configPath:   configPath,
+			defaultsPath: "config/defaults_mixed_suffixes.yaml",
+			mockImageConverter: func(tc *testcase) *converterMocks.MockImageConverter {
+				mockImageConverter := converterMocks.NewMockImageConverter(t)
+				return mockImageConverter
+			},
+			mockVideoConverter: func(tc *testcase) *converterMocks.MockVideoConverter {
+				mockVideoConverter := converterMocks.NewMockVideoConverter(t)
+				src, _ := tc.conversion.AbsoluteSourcePath()
+				destVP9, _ := tc.conversion.AbsoluteDestinationPath(tc.conversion.ConvertTo[0])
+				destAV1, _ := tc.conversion.AbsoluteDestinationPath(tc.conversion.ConvertTo[1])
+				mockVideoConverter.On(
+					"Convert",
+					src,
+					destVP9,
+					converter.ConversionConfig{
+						"c:v": "libvpx-vp9",
+						"c:a": "libopus",
+						"crf": "35",
+					},
+				).Return(nil).Once()
+				mockVideoConverter.On(
+					"Convert",
+					src,
+					destAV1,
+					converter.ConversionConfig{
+						"c:v": "libaom-av1",
+						"c:a": "libopus",
+						"crf": "50",
+					},
+				).Return(nil).Once()
+				return mockVideoConverter
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -153,10 +285,10 @@ func TestConverterService(t *testing.T) {
 			mockImageConverter := tc.mockImageConverter(&tc)
 			mockVideoConverter := tc.mockVideoConverter(&tc)
 
-			serv, _ := converter.NewService(
+			serv, _ := converterService.NewService(
 				config.MustLoad(&config.ConfigOptions{
-					ConfigPath:   configPath,
-					DefaultsPath: defaultsPath,
+					ConfigPath:   tc.configPath,
+					DefaultsPath: tc.defaultsPath,
 				}),
 				logger,
 				mockImageConverter,

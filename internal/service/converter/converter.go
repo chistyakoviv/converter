@@ -61,9 +61,10 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		if err != nil {
 			return service.NewConverterError(err.Error(), service.ErrUnableToConvertFile)
 		}
+
 		var filetypeErr error
 		var imageOk, videoOk bool
-		// TODO: test convfig merging
+
 		if imageOk, filetypeErr = file.IsImage(info.Fullpath); imageOk {
 			mergedConf := converter.MergeConfigs(s.imageConfigs[entry.Key()], entry.ConvConf)
 			if err := s.imageConverter.Convert(src, dest, mergedConf); err != nil {
@@ -73,6 +74,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		if filetypeErr != nil {
 			return service.NewConverterError(filetypeErr.Error(), service.ErrInvalidConversionFormat)
 		}
+
 		if videoOk, filetypeErr = file.IsVideo(info.Fullpath); videoOk {
 			mergedConf := converter.MergeConfigs(s.videoConfigs[entry.Key()], entry.ConvConf)
 			if err := s.videoConverter.Convert(src, dest, mergedConf); err != nil {
@@ -82,6 +84,7 @@ func (s *serv) Convert(ctx context.Context, info *model.Conversion) error {
 		if filetypeErr != nil {
 			return service.NewConverterError(filetypeErr.Error(), service.ErrInvalidConversionFormat)
 		}
+
 		if !imageOk && !videoOk {
 			return service.NewConverterError(fmt.Sprintf("the file is not an image or video: %s", src), service.ErrWrongSourceFile)
 		}

@@ -1,0 +1,21 @@
+image:
+  formats:
+    - ext: "webp"
+video:
+  formats: 
+    - ext: "webm"
+      optional:
+        replace_orig_ext: true
+        suffix: ".vp9"
+      conv_conf:
+        c:v: "libvpx-vp9"
+        c:a: "libopus"
+        crf: "35"
+    - ext: "webm"
+      optional:
+        replace_orig_ext: true
+        suffix: ".av1"
+      conv_conf:
+        c:v: "libaom-av1"
+        c:a: "libopus"
+        crf: "45"
