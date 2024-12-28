@@ -27,6 +27,7 @@ var (
 		"jpeg": &ImageConversionFormats,
 		"png":  &ImageConversionFormats,
 		"mp4":  &VideoConversionFormats,
+		"webm": &VideoConversionFormats,
 	}
 
 	ImageFormats = map[string]bool{
