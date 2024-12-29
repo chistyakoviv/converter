@@ -12,19 +12,19 @@ import (
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
-type conf struct {
+type conv struct {
 	cfg    *config.Config
 	logger *slog.Logger
 }
 
 func NewVideoConverter(cfg *config.Config, logger *slog.Logger) converter.VideoConverter {
-	return &conf{
+	return &conv{
 		cfg:    cfg,
 		logger: logger,
 	}
 }
 
-func (c *conf) Convert(from string, to string, conf converter.ConversionConfig) error {
+func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) error {
 	const op = "ffmpeg-go.Convert"
 
 	logger := c.logger.With(slog.String("op", op))
@@ -64,4 +64,4 @@ func (c *conf) Convert(from string, to string, conf converter.ConversionConfig) 
 	return nil
 }
 
-func (c *conf) Shutdown() {}
+func (c *conv) Shutdown() {}
