@@ -16,7 +16,7 @@ type DQueue interface {
 }
 
 type queue struct {
-	done      chan interface{}
+	done      chan struct{}
 	once      sync.Once
 	mu        sync.Mutex
 	callbacks []callback
@@ -25,7 +25,7 @@ type queue struct {
 
 func New(logger *slog.Logger) DQueue {
 	return &queue{
-		done:   make(chan interface{}),
+		done:   make(chan struct{}),
 		logger: logger,
 	}
 }

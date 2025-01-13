@@ -22,8 +22,8 @@ type serv struct {
 	conversionQueueService service.ConversionQueueService
 	deletionQueueService   service.DeletionQueueService
 	converterService       service.ConverterService
-	conversionQueue        chan interface{}
-	deletionQueue          chan interface{}
+	conversionQueue        chan struct{}
+	deletionQueue          chan struct{}
 	mu                     sync.RWMutex
 	isScanning             bool
 }
@@ -44,8 +44,8 @@ func NewService(
 		conversionQueueService: conversionQueueService,
 		deletionQueueService:   deletionQueueService,
 		converterService:       converterService,
-		conversionQueue:        make(chan interface{}, 1),
-		deletionQueue:          make(chan interface{}, 1),
+		conversionQueue:        make(chan struct{}, 1),
+		deletionQueue:          make(chan struct{}, 1),
 	}
 }
 
