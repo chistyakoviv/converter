@@ -92,7 +92,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 	for {
 		// It is safe to ask for a task outside a transaction
 		// because there is no contention for resources,
-		// as the operation is processed in a single thread.
+		// as the operation is processed in a single thread (monitor goroutine).
 		fileInfo, err := s.conversionQueueService.Pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
