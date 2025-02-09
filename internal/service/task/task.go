@@ -50,6 +50,7 @@ func NewService(
 }
 
 // Try to add a conversion task only if the queue is not full
+// TODO: protect the method from pushing values to the channel when it is closed
 func (s *serv) TryQueueConversion() bool {
 	select {
 	case s.conversionQueue <- struct{}{}:
@@ -60,6 +61,7 @@ func (s *serv) TryQueueConversion() bool {
 }
 
 // Try to add a deletion task only if the queue is not full
+// TODO: protect the method from pushing values to the channel when it is closed
 func (s *serv) TryQueueDeletion() bool {
 	select {
 	case s.deletionQueue <- struct{}{}:
