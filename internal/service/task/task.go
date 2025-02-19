@@ -52,6 +52,13 @@ func NewService(
 // Try to add a conversion task only if the queue is not full
 // TODO: protect the method from pushing values to the channel when it is closed
 func (s *serv) TryQueueConversion() bool {
+	// Return false if the queue is closed
+	// select {
+	// case <-done:
+	// 	return false
+	// default:
+	// }
+
 	select {
 	case s.conversionQueue <- struct{}{}:
 		return true
@@ -80,6 +87,7 @@ func (s *serv) ProcessQueues(ctx context.Context) {
 			s.processDeletion(ctx)
 		case <-ctx.Done():
 			s.logger.Info("context done, exiting from task processing")
+			// TODO: close chnanels using the shutdown method
 			close(s.conversionQueue)
 			close(s.deletionQueue)
 			return

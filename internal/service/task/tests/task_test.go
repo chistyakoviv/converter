@@ -384,14 +384,18 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			}
 
 			var wg sync.WaitGroup
+			var done = make(chan struct{})
 
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				close(done)
 				taskService.ProcessQueues(ctx)
 			}()
 
-			time.Sleep(100 * time.Millisecond)
+			// Wait goroutine to start
+			// time.Sleep(100 * time.Millisecond)
+			<-done
 
 			cancel()
 
