@@ -73,7 +73,7 @@ func (a *app) Run(ctx context.Context) {
 			return srv.Shutdown(ctx)
 		})
 
-		// ListenAndServe always returns a non-nil error. After [Server.Shutdown] or [Server.Close], the returned error is [ErrServerClosed].
+		// ListenAndServe always returns a non-nil error. After [Server.Shutdown] or [Server.Close], the returned error is [ErrServerClosed]
 		err := srv.ListenAndServe()
 		if !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("http server error", slogger.Err(err))
@@ -86,7 +86,12 @@ func (a *app) Run(ctx context.Context) {
 		logger.Info("periodic task scheduling started", slog.String("timeout", cfg.Task.CheckTimeout.String()))
 
 		ticker := time.NewTicker(cfg.Task.CheckTimeout)
-		defer ticker.Stop()
+		dq.Add(func() error {
+			ticker.Stop()
+			taskService.Shutdown()
+			return nil
+		})
+
 		for range ticker.C {
 			taskService.TryQueueConversion()
 			taskService.TryQueueDeletion()
@@ -97,6 +102,8 @@ func (a *app) Run(ctx context.Context) {
 	go func() {
 		logger.Info("tasks processing started")
 
+		// Processing automatically stops when Shutdown is called
+		// by the periodic task scheduling goroutine
 		taskService.ProcessQueues(ctx)
 	}()
 
@@ -104,7 +111,7 @@ func (a *app) Run(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 		logger.Info("terminating: context canceled")
-	// No need for a wait group until the application is blocked, waiting for an OS signal.
+	// No need for a wait group until the application is blocked, waiting for an OS signal
 	case <-waitSignal():
 		logger.Info("terminating: via signal")
 	}

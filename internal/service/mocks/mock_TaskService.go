@@ -146,6 +146,38 @@ func (_c *MockTaskService_ProcessScanfs_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// Shutdown provides a mock function with no fields
+func (_m *MockTaskService) Shutdown() {
+	_m.Called()
+}
+
+// MockTaskService_Shutdown_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Shutdown'
+type MockTaskService_Shutdown_Call struct {
+	*mock.Call
+}
+
+// Shutdown is a helper method to define mock.On call
+func (_e *MockTaskService_Expecter) Shutdown() *MockTaskService_Shutdown_Call {
+	return &MockTaskService_Shutdown_Call{Call: _e.mock.On("Shutdown")}
+}
+
+func (_c *MockTaskService_Shutdown_Call) Run(run func()) *MockTaskService_Shutdown_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockTaskService_Shutdown_Call) Return() *MockTaskService_Shutdown_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockTaskService_Shutdown_Call) RunAndReturn(run func()) *MockTaskService_Shutdown_Call {
+	_c.Run(run)
+	return _c
+}
+
 // TryQueueConversion provides a mock function with no fields
 func (_m *MockTaskService) TryQueueConversion() bool {
 	ret := _m.Called()

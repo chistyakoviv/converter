@@ -26,10 +26,9 @@ type TaskService interface {
 	TryQueueConversion() bool
 	TryQueueDeletion() bool
 	ProcessQueues(ctx context.Context)
-	// ProcessConversion(ctx context.Context)
-	// ProcessDeletion(ctx context.Context)
 	ProcessScanfs(ctx context.Context, rootDir string) error
 	IsScanning() bool
+	Shutdown()
 }
 
 type ConverterService interface {
