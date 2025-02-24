@@ -46,3 +46,8 @@ converter-migrate-down: wait-db
 
 converter-lint:
 	golangci-lint run -v ./... --config .golangci.pipeline.yaml
+
+# Make tag
+# git tag v1.0.12
+# Push tag
+# git push origin v1.0.12
