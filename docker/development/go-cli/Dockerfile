@@ -38,7 +38,7 @@ WORKDIR /go/src/github.com/chistyakoviv/converter
 RUN go install github.com/pressly/goose/v3/cmd/goose@v3.23.0
 
 COPY ./go.mod ./go.sum ./
-RUN go mod tidy
+RUN go mod download
 
 COPY ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod 555 /usr/local/bin/wait-for-it
