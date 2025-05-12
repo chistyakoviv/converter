@@ -20,13 +20,12 @@ func readHead(src string) ([]byte, error) {
 	}
 
 	head := make([]byte, headSize)
+	defer func() {
+		// TODO: log error
+		_ = file.Close()
+	}()
 
 	_, err = file.Read(head)
-	if err != nil {
-		return nil, err
-	}
-
-	err = file.Close()
 	if err != nil {
 		return nil, err
 	}
