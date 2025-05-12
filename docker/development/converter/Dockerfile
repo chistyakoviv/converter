@@ -1,4 +1,4 @@
-FROM golang:1.23.2-alpine3.20
+FROM golang:1.24.2-alpine3.21
 
 # Allow to run programs with -race flag
 ENV CGO_ENABLED=1

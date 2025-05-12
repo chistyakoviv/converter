@@ -1,4 +1,4 @@
-FROM golang:1.23.2-alpine3.20
+FROM golang:1.24.2-alpine3.21
 
 # Do not use MOCKERY_VERSION, as it causes mockery to fail with a version parsing error.
 ENV MOCKERY_INSTALL_VERSION=2.50.0
