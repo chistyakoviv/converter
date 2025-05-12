@@ -1,49 +1,55 @@
-# More info on config here: https://golangci-lint.run/usage/configuration/#config-file
+version: "2"
 run:
   concurrency: 8
-  timeout: 10m
   issues-exit-code: 1
   tests: true
-
 output:
-  formats: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-
-linters-settings:
-  shadow: true
-  # govet:
-  #   check-shadowing: true
-  dupl:
-    threshold: 100
-  goconst:
-    min-len:         2
-    min-occurrences: 2
- 
+  formats: 
+    text: 
+      print-issued-lines: true
+      print-linter-name: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - goconst
-    - goimports
     - gosec
     - govet
     - ineffassign
-    - gosimple
+    # - revive
     - staticcheck
     - unused
-    - revive
-    - typecheck
-    - unused
-
-issues:
-  exclude-use-default: false
-  exclude:
-    # _ instead of err checks
-    - G104
-    - exported func .* returns unexported type .*, which can be annoying to use
-    - should have a package comment
-    - don't use an underscore in package name
-  exclude-dirs:
-    - data
-    - .cache
+  settings:
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+  exclusions:
+    generated: lax
+    rules:
+      - path: (.+)\.go$
+        text: G104
+      - path: (.+)\.go$
+        text: exported func .* returns unexported type .*, which can be annoying to use
+      - path: (.+)\.go$
+        text: should have a package comment
+      - path: (.+)\.go$
+        text: don't use an underscore in package name
+    paths:
+      - data
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - data
+      - .cache
+      - third_party$
+      - builtin$
+      - examples$

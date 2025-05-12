@@ -20,7 +20,6 @@ import (
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/service/conversionq"
-	"github.com/chistyakoviv/converter/internal/service/mocks"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
@@ -42,8 +41,8 @@ func TestConvertHandler(t *testing.T) {
 		conversionInfo        *model.ConversionInfo
 		conversionReq         *request.ConversionRequest
 		mockValidator         func(tc *testcase) handlers.Validator
-		mockConversionService func(tc *testcase) *mocks.MockConversionQueueService
-		mockTaskService       func(tc *testcase) *mocks.MockTaskService
+		mockConversionService func(tc *testcase) *serviceMocks.MockConversionQueueService
+		mockTaskService       func(tc *testcase) *serviceMocks.MockTaskService
 	}
 
 	cases := []testcase{
@@ -56,11 +55,11 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator := handlersMocks.NewMockValidator(t)
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -73,11 +72,11 @@ func TestConvertHandler(t *testing.T) {
 			mockValidator: func(tc *testcase) handlers.Validator {
 				return validation
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -94,12 +93,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrPathAlreadyExist).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -116,12 +115,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFileDoesNotExist).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -138,12 +137,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFileTypeNotSupported).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -160,12 +159,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrFailedDetermineFileType).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -182,12 +181,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrInvalidConversionFormat).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -204,12 +203,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, conversionq.ErrEmptyTargetFormatList).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -226,12 +225,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(errorId, errors.New("Unknown error")).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -248,12 +247,12 @@ func TestConvertHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.conversionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockConversionService: func(tc *testcase) *mocks.MockConversionQueueService {
+			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(successId, nil).Once()
 				return mockConversionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("TryQueueConversion").Return(true).Once()
 				return mockTaskService

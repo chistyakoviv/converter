@@ -18,10 +18,18 @@ func readHead(src string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
 	head := make([]byte, headSize)
-	file.Read(head)
+
+	_, err = file.Read(head)
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	return head, nil
 }

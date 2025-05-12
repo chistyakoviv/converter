@@ -23,6 +23,7 @@ func TestImageConverter(t *testing.T) {
 		}
 	)
 
+	// #nosec G301 -- this is test code and wide permissions are intentional
 	outputDirErr := os.MkdirAll(filesOutputDir, 0777)
 	require.NoError(t, outputDirErr)
 

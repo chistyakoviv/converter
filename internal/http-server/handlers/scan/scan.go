@@ -8,6 +8,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/constants"
 	loggerDecorator "github.com/chistyakoviv/converter/internal/http-server/decorators/logger"
 	resp "github.com/chistyakoviv/converter/internal/lib/http/response"
+	"github.com/chistyakoviv/converter/internal/lib/slogger"
 	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/go-chi/render"
 )
@@ -35,7 +36,10 @@ func New(
 
 		// Do not wait for the scan to complete
 		go func() {
-			taskService.ProcessScanfs(ctx, constants.FilesRootDir)
+			err := taskService.ProcessScanfs(ctx, constants.FilesRootDir)
+			if err != nil {
+				decoratedLogger.Error("failed to scan filesystem: ", slogger.Err(err))
+			}
 
 			decoratedLogger.Debug("scan completed")
 

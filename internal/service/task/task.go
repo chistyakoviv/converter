@@ -90,9 +90,9 @@ func (s *serv) ProcessQueues(ctx context.Context) {
 	for {
 		select {
 		case <-s.conversionQueue:
-			s.processConversion(ctx)
+			_ = s.processConversion(ctx)
 		case <-s.deletionQueue:
-			s.processDeletion(ctx)
+			_ = s.processDeletion(ctx)
 		case <-ctx.Done():
 			s.logger.Info("context done, exiting from task processing")
 			s.Shutdown()

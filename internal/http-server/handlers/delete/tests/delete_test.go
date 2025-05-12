@@ -20,7 +20,6 @@ import (
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
 	"github.com/chistyakoviv/converter/internal/service/deletionq"
-	"github.com/chistyakoviv/converter/internal/service/mocks"
 	serviceMocks "github.com/chistyakoviv/converter/internal/service/mocks"
 )
 
@@ -41,8 +40,8 @@ func TestDeleteHandler(t *testing.T) {
 		deletionInfo        *model.DeletionInfo
 		deletionReq         *request.DeletionRequest
 		mockValidator       func(tc *testcase) handlers.Validator
-		mockDeletionService func(tc *testcase) *mocks.MockDeletionQueueService
-		mockTaskService     func(tc *testcase) *mocks.MockTaskService
+		mockDeletionService func(tc *testcase) *serviceMocks.MockDeletionQueueService
+		mockTaskService     func(tc *testcase) *serviceMocks.MockTaskService
 	}
 
 	cases := []testcase{
@@ -55,11 +54,11 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator := handlersMocks.NewMockValidator(t)
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -72,11 +71,11 @@ func TestDeleteHandler(t *testing.T) {
 			mockValidator: func(tc *testcase) handlers.Validator {
 				return validation
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -93,12 +92,12 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, deletionq.ErrPathAlreadyExist).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -115,12 +114,12 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, deletionq.ErrFileDoesNotExist).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -137,12 +136,12 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(errorId, errors.New("unknown error")).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				return mockTaskService
 			},
@@ -159,12 +158,12 @@ func TestDeleteHandler(t *testing.T) {
 				mockValidator.On("Struct", tc.deletionReq).Return(nil).Once()
 				return mockValidator
 			},
-			mockDeletionService: func(tc *testcase) *mocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(successId, nil).Once()
 				return mockDeletionService
 			},
-			mockTaskService: func(tc *testcase) *mocks.MockTaskService {
+			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
 				mockTaskService.On("TryQueueDeletion").Return(true).Once()
 				return mockTaskService
