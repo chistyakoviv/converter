@@ -30,7 +30,7 @@ func initRoutes(ctx context.Context, c di.Container) {
 		resolveTaskService(c),
 	))
 
-	router.Post("/delete", delete.New(
+	router.Delete("/delete", delete.New(
 		ctx,
 		resolveLogger(c),
 		resolveValidator(c),

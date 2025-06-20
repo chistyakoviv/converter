@@ -80,7 +80,7 @@ Examples for both configurations can be found in the `config` directory.
 The service provides three endpoints:
 
 - `POST /convert`: Enqueue a file for conversion.
-- `POST /delete`: Delete converted files for a specified file.
+- `DELETE /delete`: Delete converted files for a specified file.
 - `POST /scan`: Scan the `files` directory and enqueue found files for conversion.
 
 #### Conversion Request
