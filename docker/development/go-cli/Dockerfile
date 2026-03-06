@@ -1,4 +1,4 @@
-FROM golang:1.24.2-alpine3.21
+FROM golang:1.26.1-alpine3.22
 
 # Do not use MOCKERY_VERSION, as it causes mockery to fail with a version parsing error.
 ENV MOCKERY_INSTALL_VERSION=2.50.0
@@ -43,7 +43,10 @@ RUN go mod download
 COPY ./docker/common/wait-for-it.sh /usr/local/bin/wait-for-it
 RUN chmod 555 /usr/local/bin/wait-for-it
 
-RUN addgroup -g 1000 app && adduser -u 1000 -G app -s /bin/sh -D app
+ARG UID=1000
+ARG GID=1000
+
+RUN addgroup -g "${GID}" app && adduser -u "${UID}" -G app -s /bin/sh -D app
 RUN chown -R app:app /go/pkg
 
 USER app

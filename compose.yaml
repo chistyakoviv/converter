@@ -26,6 +26,9 @@ services:
   go-cli:
     build:
       dockerfile: ./docker/development/go-cli/Dockerfile
+      args:
+          GID: ${GID:-1000}
+          UID: ${UID:-1000}
     volumes:
       - ./:/go/src/github.com/chistyakoviv/converter
     environment:
