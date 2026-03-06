@@ -116,11 +116,13 @@ func (a *app) Run(ctx context.Context) {
 		logger.Info("terminating: via signal")
 	}
 
+	// Cancel the context before executing the deferred functions,
+	// so that the queue processing goroutine stops polling the queue
+	cancel()
+
 	// Call all deferred functions and wait them to be done
 	dq.Release()
 	dq.Wait()
-
-	cancel()
 }
 
 func waitSignal() chan os.Signal {
