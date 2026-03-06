@@ -1,6 +1,7 @@
 package app
 
 import (
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -9,8 +10,9 @@ import (
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/db"
-	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
+	"github.com/chistyakoviv/converter/internal/lib/deferredq"
+	"github.com/chistyakoviv/converter/internal/lib/stack_parser"
 	"github.com/chistyakoviv/converter/internal/repository"
 	"github.com/chistyakoviv/converter/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -38,6 +40,26 @@ func resolveLogger(c di.Container) *slog.Logger {
 	}
 
 	return logger
+}
+
+func resolveStackParser(c di.Container) stack_parser.StackParser {
+	stackParser, err := di.Resolve[stack_parser.StackParser](c, "stackParser")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve stack parser definition: %v", err)
+	}
+
+	return stackParser
+}
+
+func resolvePanicWriter(c di.Container) io.Writer {
+	panicWriter, err := di.Resolve[io.Writer](c, "panicWriter")
+
+	if err != nil {
+		log.Fatalf("Couldn't resolve panic writer definition: %v", err)
+	}
+
+	return panicWriter
 }
 
 func resolveDbClient(c di.Container) db.Client {

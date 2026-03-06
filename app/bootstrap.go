@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -15,10 +16,12 @@ import (
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/db/pg"
 	"github.com/chistyakoviv/converter/internal/db/transaction"
-	"github.com/chistyakoviv/converter/internal/deferredq"
 	"github.com/chistyakoviv/converter/internal/di"
-	mwLogger "github.com/chistyakoviv/converter/internal/http-server/middleware/logger"
+	httpMiddleware "github.com/chistyakoviv/converter/internal/http-server/middleware"
+	"github.com/chistyakoviv/converter/internal/lib/deferredq"
+	"github.com/chistyakoviv/converter/internal/lib/panic_writer"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
+	"github.com/chistyakoviv/converter/internal/lib/stack_parser"
 	"github.com/chistyakoviv/converter/internal/repository"
 	conversionRepository "github.com/chistyakoviv/converter/internal/repository/conversion"
 	deletionRepository "github.com/chistyakoviv/converter/internal/repository/deletion"
@@ -65,6 +68,44 @@ func bootstrap(ctx context.Context, c di.Container) {
 		return logger
 	})
 
+	c.RegisterSingleton("stackParser", func(c di.Container) stack_parser.StackParser {
+		cfg := resolveConfig(c)
+		var stackParser stack_parser.StackParser
+
+		switch cfg.Env {
+		case config.EnvProd:
+			// Do not use colors in production
+			stackParser = stack_parser.NewSimpleStackParser()
+		case config.EnvDev:
+			stackParser = stack_parser.NewSimpleStackParser()
+		default:
+			// Use colors in development
+			stackParser = stack_parser.NewPrettyStackParser()
+		}
+
+		return stackParser
+	})
+
+	c.RegisterSingleton("panicWriter", func(c di.Container) io.Writer {
+		cfg := resolveConfig(c)
+		logger := resolveLogger(c)
+
+		var panicWriter io.Writer
+
+		switch cfg.Env {
+		case config.EnvProd:
+			// Write panics to logger in production
+			panicWriter = panic_writer.NewLoggerPanicWriter(logger)
+		case config.EnvDev:
+			panicWriter = panic_writer.NewLoggerPanicWriter(logger)
+		default:
+			// Write panics to stderr in development
+			panicWriter = os.Stderr
+		}
+
+		return panicWriter
+	})
+
 	c.RegisterSingleton("db", func(c di.Container) db.Client {
 		cfg := resolveConfig(c)
 		logger := resolveLogger(c)
@@ -93,13 +134,12 @@ func bootstrap(ctx context.Context, c di.Container) {
 	c.RegisterSingleton("router", func(c di.Container) *chi.Mux {
 		router := chi.NewRouter()
 		logger := resolveLogger(c)
+		panicWriter := resolvePanicWriter(c)
+		stackParser := resolveStackParser(c)
 
 		router.Use(middleware.RequestID)
-		// Replace middleware.Logger with custom logger middleware to keep logs consistent with the rest of the application
-		// router.Use(middleware.Logger)
-		router.Use(mwLogger.New(logger))
-		// router.Use(middleware.Heartbeat("/ping"))
-		router.Use(middleware.Recoverer)
+		router.Use(httpMiddleware.New(logger))
+		router.Use(httpMiddleware.NewRecoverer(panicWriter, stackParser, logger))
 		router.Use(middleware.URLFormat)
 		router.Use(middleware.NoCache)
 
