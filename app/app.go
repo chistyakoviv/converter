@@ -117,7 +117,11 @@ func (a *app) Run(ctx context.Context) {
 	}
 
 	// Cancel the context before executing the deferred functions,
-	// so that the queue processing goroutine stops polling the queue
+	// so that the queue processing goroutine stops polling the queue,
+	// otherwise deferred functions will call Shutdown on the task service
+	// and close the queue channels, which will cause infinite loop until
+	// the context is canceled. The loop will produce errors, because
+	// most likely the db connection is already closed
 	cancel()
 
 	// Call all deferred functions and wait them to be done
