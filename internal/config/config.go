@@ -82,12 +82,15 @@ func MustLoad(opts *ConfigOptions) *Config {
 		// log.Fatal("CONFIG_PATH is not set")
 
 		// check if file exists.
+		// #nosec G703 -- configPath comes from CLI flag or env variable
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			// #nosec G706 -- configPath comes from CLI flag or env variable
 			log.Fatalf("config file %s does not exist", configPath)
 		}
 
 		// Read from file.
 		if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+			// #nosec G706 -- configPath comes from CLI flag or env variable
 			log.Fatalf("failed to load config from %s: %v", configPath, err)
 		}
 	}
@@ -103,11 +106,14 @@ func MustLoad(opts *ConfigOptions) *Config {
 
 	// Defaults are empty by default and are left unchanged if no path is provided.
 	if defaultsPath != "" {
+		// #nosec G703 -- defaultsPath comes from CLI flag or env variable
 		if _, err := os.Stat(defaultsPath); os.IsNotExist(err) {
+			// #nosec G706 -- defaultsPath comes from CLI flag or env variable
 			log.Fatalf("file with defaults %s does not exist", defaultsPath)
 		}
 
 		if err := cleanenv.ReadConfig(defaultsPath, &dfs); err != nil {
+			// #nosec G706 -- defaultsPath comes from CLI flag or env variable
 			log.Fatalf("failed to load file with defaults from %s: %v", defaultsPath, err)
 		}
 	}

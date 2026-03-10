@@ -2,6 +2,7 @@ FROM golang:1.26.1-alpine3.22
 
 # Do not use MOCKERY_VERSION, as it causes mockery to fail with a version parsing error.
 ENV MOCKERY_INSTALL_VERSION=2.50.0
+ENV GOLANGCI_LINT_VERSION=2.11.2
 
 RUN apk add --no-cache \
     curl \
@@ -31,7 +32,7 @@ RUN mkdir -p /tmp/mockery && \
     rm -rf /tmp/mockery
 
 # See https://golangci-lint.run/welcome/install/
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
 
 WORKDIR /go/src/github.com/chistyakoviv/converter
 
