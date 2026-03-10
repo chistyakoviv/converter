@@ -6,3 +6,6 @@
 
 # binaries
 /bin
+
+# IDE
+.vscode
