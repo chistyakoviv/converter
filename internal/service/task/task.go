@@ -24,7 +24,6 @@ type serv struct {
 	converterService       service.ConverterService
 	conversionQueue        chan struct{}
 	deletionQueue          chan struct{}
-	done                   chan struct{}
 	doneOnce               sync.Once
 	mu                     sync.RWMutex
 	isScanning             bool
@@ -48,20 +47,13 @@ func NewService(
 		converterService:       converterService,
 		conversionQueue:        make(chan struct{}, 1),
 		deletionQueue:          make(chan struct{}, 1),
-		done:                   make(chan struct{}),
 	}
 }
 
 // Try to add a conversion task only if the queue is not full
 func (s *serv) TryQueueConversion() bool {
-	// Do not try to schedule handling if the queue is closed
 	select {
-	case <-s.done:
-		return false
-	default:
-	}
-
-	select {
+	// The queue is nill if task processing is stopped
 	case s.conversionQueue <- struct{}{}:
 		return true
 	default:
@@ -71,14 +63,8 @@ func (s *serv) TryQueueConversion() bool {
 
 // Try to add a deletion task only if the queue is not full
 func (s *serv) TryQueueDeletion() bool {
-	// Do not try to schedule handling if the queue is closed
 	select {
-	case <-s.done:
-		return false
-	default:
-	}
-
-	select {
+	// The queue is nill if task processing is stopped
 	case s.deletionQueue <- struct{}{}:
 		return true
 	default:
@@ -291,8 +277,11 @@ func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
 
 func (s *serv) Shutdown() {
 	s.doneOnce.Do(func() {
-		close(s.done)
-		close(s.conversionQueue)
-		close(s.deletionQueue)
+		conversionQueue := s.conversionQueue
+		deletionQueue := s.deletionQueue
+		s.conversionQueue = nil
+		s.deletionQueue = nil
+		close(conversionQueue)
+		close(deletionQueue)
 	})
 }
