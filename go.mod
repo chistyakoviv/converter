@@ -1,6 +1,6 @@
 module github.com/chistyakoviv/converter
 
-go 1.24.2
+go 1.26.1
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
