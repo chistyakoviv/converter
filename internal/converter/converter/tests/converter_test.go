@@ -8,10 +8,10 @@ import (
 
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
+	converterService "github.com/chistyakoviv/converter/internal/converter/converter"
 	converterMocks "github.com/chistyakoviv/converter/internal/converter/mocks"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
-	converterService "github.com/chistyakoviv/converter/internal/service/converter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

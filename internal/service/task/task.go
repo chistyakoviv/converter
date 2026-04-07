@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/chistyakoviv/converter/internal/converter"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/file"
 	"github.com/chistyakoviv/converter/internal/lib/slogger"
@@ -21,7 +22,7 @@ type serv struct {
 	logger                 *slog.Logger
 	conversionQueueService service.ConversionQueueService
 	deletionQueueService   service.DeletionQueueService
-	converterService       service.ConverterService
+	converter              converter.Converter
 	conversionQueue        chan struct{}
 	deletionQueue          chan struct{}
 	doneOnce               sync.Once
@@ -39,13 +40,13 @@ func NewService(
 	logger *slog.Logger,
 	conversionQueueService service.ConversionQueueService,
 	deletionQueueService service.DeletionQueueService,
-	converterService service.ConverterService,
+	converter converter.Converter,
 ) service.TaskService {
 	return &serv{
 		logger:                 logger,
 		conversionQueueService: conversionQueueService,
 		deletionQueueService:   deletionQueueService,
-		converterService:       converterService,
+		converter:              converter,
 		conversionQueue:        make(chan struct{}, 1),
 		deletionQueue:          make(chan struct{}, 1),
 		done:                   make(chan struct{}),
@@ -123,7 +124,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 			return err
 		}
 
-		err = s.converterService.Convert(ctx, fileInfo)
+		err = s.converter.Convert(ctx, fileInfo)
 		if err != nil {
 			logger.Error("failed to convert file from conversion queue", slogger.Err(err))
 			cancelErr := s.conversionQueueService.MarkAsCanceled(ctx, fileInfo.Fullpath, service.GetConverterError(err).Code())

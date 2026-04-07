@@ -30,7 +30,3 @@ type TaskService interface {
 	IsScanning() bool
 	Shutdown()
 }
-
-type ConverterService interface {
-	Convert(ctx context.Context, info *model.Conversion) error
-}

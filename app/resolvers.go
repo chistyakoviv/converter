@@ -205,8 +205,8 @@ func resolveTaskService(c di.Container) service.TaskService {
 	return serv
 }
 
-func resolveConverterService(c di.Container) service.ConverterService {
-	serv, err := di.Resolve[service.ConverterService](c, "converterService")
+func resolveConverterService(c di.Container) converter.Converter {
+	serv, err := di.Resolve[converter.Converter](c, "converterService")
 
 	if err != nil {
 		log.Fatalf("Couldn't resolve converter service definition: %v", err)

@@ -11,6 +11,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/chistyakoviv/converter/internal/config"
 	"github.com/chistyakoviv/converter/internal/converter"
+	converterService "github.com/chistyakoviv/converter/internal/converter/converter"
 	"github.com/chistyakoviv/converter/internal/converter/ffmpeggo"
 	"github.com/chistyakoviv/converter/internal/converter/govips"
 	"github.com/chistyakoviv/converter/internal/db"
@@ -27,7 +28,6 @@ import (
 	deletionRepository "github.com/chistyakoviv/converter/internal/repository/deletion"
 	"github.com/chistyakoviv/converter/internal/service"
 	conversionQueueService "github.com/chistyakoviv/converter/internal/service/conversionq"
-	converterService "github.com/chistyakoviv/converter/internal/service/converter"
 	deletionQueueService "github.com/chistyakoviv/converter/internal/service/deletionq"
 	"github.com/chistyakoviv/converter/internal/service/task"
 	"github.com/go-chi/chi/v5"
@@ -236,7 +236,7 @@ func bootstrap(ctx context.Context, c di.Container) {
 		)
 	})
 
-	c.RegisterSingleton("converterService", func(c di.Container) service.ConverterService {
+	c.RegisterSingleton("converterService", func(c di.Container) converter.Converter {
 		serv, err := converterService.NewService(resolveConfig(c),
 			resolveLogger(c),
 			resolveImageConverter(c),

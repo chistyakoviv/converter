@@ -12,7 +12,6 @@ import (
 	"github.com/chistyakoviv/converter/internal/service"
 )
 
-// TODO: move to converter directory, because it has nothing to do with service
 type serv struct {
 	cfg            *config.Config
 	logger         *slog.Logger
@@ -27,7 +26,7 @@ func NewService(
 	logger *slog.Logger,
 	imageConverter converter.ImageConverter,
 	videoConverter converter.VideoConverter,
-) (service.ConverterService, error) {
+) (converter.Converter, error) {
 	imageConfigs := make(map[string]converter.ConversionConfig)
 	videoConfigs := make(map[string]converter.ConversionConfig)
 	for _, entry := range cfg.Defaults.Image.Formats {
