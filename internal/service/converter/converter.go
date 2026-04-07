@@ -12,6 +12,7 @@ import (
 	"github.com/chistyakoviv/converter/internal/service"
 )
 
+// TODO: move to converter directory, because it has nothing to do with service
 type serv struct {
 	cfg            *config.Config
 	logger         *slog.Logger
