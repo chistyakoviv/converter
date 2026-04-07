@@ -47,17 +47,17 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 		Run()
 
 	if err != nil {
-		logger.Error("failed to convert video", slog.String("from", from), slog.String("to", to), slogger.Err(err))
+		logger.Debug("failed to convert video", slog.String("from", from), slog.String("to", to), slogger.Err(err))
 		return fmt.Errorf("failed to convert video: %w", err)
 	}
 
 	if err := os.Remove(to); err != nil && !os.IsNotExist(err) {
-		logger.Error("failed to remove old file", slog.String("path", to), slogger.Err(err))
+		logger.Debug("failed to remove old file", slog.String("path", to), slogger.Err(err))
 		return fmt.Errorf("failed to remove old file '%s': %w", to, err)
 	}
 
 	if err := os.Rename(tmpFile, to); err != nil {
-		logger.Error("failed to rename tmp file", slog.String("from", tmpFile), slog.String("to", to), slogger.Err(err))
+		logger.Debug("failed to rename tmp file", slog.String("from", tmpFile), slog.String("to", to), slogger.Err(err))
 		return fmt.Errorf("failed to rename tmp file '%s' to '%s': %w", tmpFile, to, err)
 	}
 

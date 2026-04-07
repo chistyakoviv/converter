@@ -115,7 +115,7 @@ func (c *conv) Convert(from string, to string, conf converter.ConversionConfig) 
 	}
 
 	if err != nil {
-		logger.Error("error", slogger.Err(err))
+		logger.Debug("error", slogger.Err(err))
 		return wrapError(err)
 	}
 
