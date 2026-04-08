@@ -88,6 +88,8 @@ func (s *serv) ProcessQueues(ctx context.Context) {
 			s.logger.Info("context done, exiting from task processing")
 			s.Shutdown()
 			return
+		case <-s.done:
+			return
 		}
 	}
 }
