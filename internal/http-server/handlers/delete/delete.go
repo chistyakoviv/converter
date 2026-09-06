@@ -69,7 +69,20 @@ func New(
 		decoratedLogger.Debug("file added to deletion queue", slog.Int64("id", id))
 
 		// Try to process the file immediately
-		taskService.TryQueueDeletion()
+		deletion, err := deletionService.Get(ctx, req.Path)
+		if err != nil {
+			decoratedLogger.Error("failed to get deletion task", slogger.Err(err))
+
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, resp.Error("failed to process file"))
+
+			return
+		}
+		if deletion.IsImage() {
+			taskService.TryQueueImageDeletion()
+		} else {
+			taskService.TryQueueVideoDeletion()
+		}
 
 		render.JSON(w, r, DeletionResponse{
 			Response: resp.OK(),

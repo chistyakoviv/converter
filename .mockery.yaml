@@ -10,7 +10,6 @@ packages:
             ConversionQueueService:
             DeletionQueueService:
             TaskService:
-            ConverterService:
     github.com/chistyakoviv/converter/internal/repository:
         # package-specific config here
         config:
@@ -26,3 +25,4 @@ packages:
         interfaces:
             ImageConverter:
             VideoConverter:
+            Converter:

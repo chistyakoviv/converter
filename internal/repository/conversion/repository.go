@@ -23,6 +23,7 @@ const (
 	extColumn       = "ext"
 	convertToColumn = "convert_to"
 	statusColumn    = "status"
+	mediaTypeColumn = "media_type"
 	errorCodeColumn = "error_code"
 	createdAtColumn = "created_at"
 	updatedAtColumn = "updated_at"
@@ -49,6 +50,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			filestemColumn,
 			extColumn,
 			convertToColumn,
+			mediaTypeColumn,
 			createdAtColumn,
 			updatedAtColumn,
 		).
@@ -58,6 +60,7 @@ func (r *repo) Create(ctx context.Context, file *model.ConversionInfo) (int64, e
 			file.Filestem,
 			file.Ext,
 			file.ConvertTo,
+			file.MediaType,
 			ts,
 			ts,
 		).
@@ -104,6 +107,7 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 		&file.Ext,
 		&file.ConvertTo,
 		&file.Status,
+		&file.MediaType,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -118,13 +122,22 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Conv
 	return &file, nil
 }
 
-func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) {
+func (r *repo) FindOldestQueuedImages(ctx context.Context) (*model.Conversion, error) {
+	return r.findOldestQueued(ctx, model.MediaTypeImage)
+}
+
+func (r *repo) FindOldestQueuedVideos(ctx context.Context) (*model.Conversion, error) {
+	return r.findOldestQueued(ctx, model.MediaTypeVideo)
+}
+
+func (r *repo) findOldestQueued(ctx context.Context, mediaType int) (*model.Conversion, error) {
 	builder := r.sq.
 		Select("*").
 		From(tablename).
 		OrderBy(fmt.Sprintf("%s ASC", updatedAtColumn)).
 		Where(
 			sq.Eq{statusColumn: model.ConversionStatusPending},
+			sq.Eq{mediaTypeColumn: mediaType},
 		).
 		Limit(1)
 
@@ -147,6 +160,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Conversion, error) 
 		&file.Ext,
 		&file.ConvertTo,
 		&file.Status,
+		&file.MediaType,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,

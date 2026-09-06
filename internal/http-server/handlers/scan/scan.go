@@ -42,9 +42,6 @@ func New(
 			}
 
 			decoratedLogger.Debug("scan completed")
-
-			// Try to process the files immediately
-			taskService.TryQueueConversion()
 		}()
 
 		render.JSON(w, r, ScanResponse{

@@ -23,8 +23,10 @@ type serv struct {
 	conversionQueueService service.ConversionQueueService
 	deletionQueueService   service.DeletionQueueService
 	converter              converter.Converter
-	conversionQueue        chan struct{}
-	deletionQueue          chan struct{}
+	imageConversionQueue   chan struct{}
+	videoConversionQueue   chan struct{}
+	imageDeletionQueue     chan struct{}
+	videoDeletionQueue     chan struct{}
 	doneOnce               sync.Once
 	mu                     sync.RWMutex
 	isScanning             bool
@@ -32,7 +34,7 @@ type serv struct {
 }
 
 /**
-* We cannot add a task to the deletion queue while a conversion is in progress,
+* We cannot add a task to a queue while it is being processed,
 * because the queue is non-blocking, and if there is no active receiver, the task will be lost.
 * To prevent this, use buffered channels to allow tasks to be queued even when there is no active receiver.
 **/
@@ -47,16 +49,18 @@ func NewService(
 		conversionQueueService: conversionQueueService,
 		deletionQueueService:   deletionQueueService,
 		converter:              converter,
-		conversionQueue:        make(chan struct{}, 1),
-		deletionQueue:          make(chan struct{}, 1),
+		imageConversionQueue:   make(chan struct{}, 1),
+		videoConversionQueue:   make(chan struct{}, 1),
+		imageDeletionQueue:     make(chan struct{}, 1),
+		videoDeletionQueue:     make(chan struct{}, 1),
 		done:                   make(chan struct{}),
 	}
 }
 
-// Try to add a conversion task only if the queue is not full
-func (s *serv) TryQueueConversion() bool {
+// Try to add an image conversion task only if the queue is not full
+func (s *serv) TryQueueImageConversion() bool {
 	select {
-	case s.conversionQueue <- struct{}{}:
+	case s.imageConversionQueue <- struct{}{}:
 		return true
 	case <-s.done:
 		return false
@@ -65,10 +69,10 @@ func (s *serv) TryQueueConversion() bool {
 	}
 }
 
-// Try to add a deletion task only if the queue is not full
-func (s *serv) TryQueueDeletion() bool {
+// Try to add a video conversion task only if the queue is not full
+func (s *serv) TryQueueVideoConversion() bool {
 	select {
-	case s.deletionQueue <- struct{}{}:
+	case s.videoConversionQueue <- struct{}{}:
 		return true
 	case <-s.done:
 		return false
@@ -77,15 +81,60 @@ func (s *serv) TryQueueDeletion() bool {
 	}
 }
 
-func (s *serv) ProcessQueues(ctx context.Context) {
+// Try to add an image deletion task only if the queue is not full
+func (s *serv) TryQueueImageDeletion() bool {
+	select {
+	case s.imageDeletionQueue <- struct{}{}:
+		return true
+	case <-s.done:
+		return false
+	default:
+		return false
+	}
+}
+
+// Try to add a video deletion task only if the queue is not full
+func (s *serv) TryQueueVideoDeletion() bool {
+	select {
+	case s.videoDeletionQueue <- struct{}{}:
+		return true
+	case <-s.done:
+		return false
+	default:
+		return false
+	}
+}
+
+func (s *serv) ProcessImageQueues(ctx context.Context) {
+	s.processQueues(ctx, "image")
+}
+
+func (s *serv) ProcessVideoQueues(ctx context.Context) {
+	s.processQueues(ctx, "video")
+}
+
+func (s *serv) processQueues(ctx context.Context, mediaType string) {
+	conversionQueue := s.videoConversionQueue
+	deletionQueue := s.videoDeletionQueue
+	popConversion := s.conversionQueueService.PopVideos
+	popDeletion := s.deletionQueueService.PopVideos
+	logger := s.logger.With(slog.String("media_type", mediaType))
+
+	if mediaType == "image" {
+		conversionQueue = s.imageConversionQueue
+		deletionQueue = s.imageDeletionQueue
+		popConversion = s.conversionQueueService.PopImages
+		popDeletion = s.deletionQueueService.PopImages
+	}
+
 	for {
 		select {
-		case <-s.conversionQueue:
-			_ = s.processConversion(ctx)
-		case <-s.deletionQueue:
-			_ = s.processDeletion(ctx)
+		case <-conversionQueue:
+			_ = s.processConversion(ctx, popConversion)
+		case <-deletionQueue:
+			_ = s.processDeletion(ctx, popDeletion)
 		case <-ctx.Done():
-			s.logger.Info("context done, exiting from task processing")
+			logger.Info("context done, exiting from task processing")
 			s.Shutdown()
 			return
 		case <-s.done:
@@ -94,7 +143,10 @@ func (s *serv) ProcessQueues(ctx context.Context) {
 	}
 }
 
-func (s *serv) processConversion(ctx context.Context) error {
+func (s *serv) processConversion(
+	ctx context.Context,
+	pop func(ctx context.Context) (*model.Conversion, error),
+) error {
 	op := "service.TaskService.ProcessConversion"
 
 	logger := s.logger.With(slog.String("op", op))
@@ -102,7 +154,7 @@ func (s *serv) processConversion(ctx context.Context) error {
 		// It is safe to ask for a task outside a transaction
 		// because there is no contention for resources,
 		// as the operation is processed in a single thread (monitor goroutine).
-		fileInfo, err := s.conversionQueueService.Pop(ctx)
+		fileInfo, err := pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
 		}
@@ -145,12 +197,15 @@ func (s *serv) processConversion(ctx context.Context) error {
 	}
 }
 
-func (s *serv) processDeletion(ctx context.Context) error {
+func (s *serv) processDeletion(
+	ctx context.Context,
+	pop func(ctx context.Context) (*model.Deletion, error),
+) error {
 	op := "service.TaskService.ProcessDeletion"
 
 	logger := s.logger.With(slog.String("op", op))
 	for {
-		file, err := s.deletionQueueService.Pop(ctx)
+		file, err := pop(ctx)
 		if errors.Is(err, db.ErrNotFound) {
 			return nil
 		}
@@ -261,9 +316,23 @@ func (s *serv) ProcessScanfs(ctx context.Context, rootDir string) error {
 					return nil
 				}
 				finfo := file.ExtractInfo(src)
-				_, err = s.conversionQueueService.Add(ctx, model.ToConversionInfoFromFileInfo(finfo))
+				conversionInfo := model.ToConversionInfoFromFileInfo(finfo)
+				if imageOk {
+					conversionInfo.MediaType = model.MediaTypeImage
+				} else {
+					conversionInfo.MediaType = model.MediaTypeVideo
+				}
+				_, err = s.conversionQueueService.Add(ctx, conversionInfo)
 				if err != nil {
 					s.logger.Error("failed to enqueue conversion while scanning filesystem", slogger.Err(err))
+					return nil
+				}
+
+				// Notify the corresponding goroutine immediately
+				if imageOk {
+					s.TryQueueImageConversion()
+				} else {
+					s.TryQueueVideoConversion()
 				}
 			}
 		}

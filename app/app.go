@@ -93,18 +93,29 @@ func (a *app) Run(ctx context.Context) {
 		})
 
 		for range ticker.C {
-			taskService.TryQueueConversion()
-			taskService.TryQueueDeletion()
+			taskService.TryQueueImageConversion()
+			taskService.TryQueueVideoConversion()
+			taskService.TryQueueImageDeletion()
+			taskService.TryQueueVideoDeletion()
 		}
 	}()
 
 	// Process queues
 	go func() {
-		logger.Info("tasks processing started")
+		logger.Info("image tasks processing started")
 
 		// Processing automatically stops when Shutdown is called
 		// by the periodic task scheduling goroutine
-		taskService.ProcessQueues(ctx)
+		taskService.ProcessImageQueues(ctx)
+	}()
+
+	// Process queues
+	go func() {
+		logger.Info("video tasks processing started")
+
+		// Processing automatically stops when Shutdown is called
+		// by the periodic task scheduling goroutine
+		taskService.ProcessVideoQueues(ctx)
 	}()
 
 	// Graceful Shutdown

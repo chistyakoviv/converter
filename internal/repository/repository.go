@@ -9,7 +9,8 @@ import (
 type ConversionQueueRepository interface {
 	Create(ctx context.Context, file *model.ConversionInfo) (int64, error)
 	FindByFullpath(ctx context.Context, fullpath string) (*model.Conversion, error)
-	FindOldestQueued(ctx context.Context) (*model.Conversion, error)
+	FindOldestQueuedImages(ctx context.Context) (*model.Conversion, error)
+	FindOldestQueuedVideos(ctx context.Context) (*model.Conversion, error)
 	MarkAsDone(ctx context.Context, fullpath string) error
 	MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error
 }
@@ -17,7 +18,8 @@ type ConversionQueueRepository interface {
 type DeletionQueueRepository interface {
 	Create(ctx context.Context, file *model.DeletionInfo) (int64, error)
 	FindByFullpath(ctx context.Context, fullpath string) (*model.Deletion, error)
-	FindOldestQueued(ctx context.Context) (*model.Deletion, error)
+	FindOldestQueuedImages(ctx context.Context) (*model.Deletion, error)
+	FindOldestQueuedVideos(ctx context.Context) (*model.Deletion, error)
 	MarkAsDone(ctx context.Context, fullpath string) error
 	MarkAsCanceled(ctx context.Context, fullpath string, code uint32) error
 }

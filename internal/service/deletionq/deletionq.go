@@ -46,7 +46,7 @@ func NewService(
 func AddTransaction(s *serv, id *int64, info *model.DeletionInfo) func(context.Context) error {
 	return func(ctx context.Context) error {
 		var errTx error
-		_, errTx = s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
+		conversion, errTx := s.conversionRepository.FindByFullpath(ctx, info.Fullpath)
 		if errors.Is(errTx, db.ErrNotFound) {
 			return fmt.Errorf("deletion failed for '%s': %w", info.Fullpath, ErrFileDoesNotExist)
 		}
@@ -62,6 +62,7 @@ func AddTransaction(s *serv, id *int64, info *model.DeletionInfo) func(context.C
 		if !errors.Is(errTx, db.ErrNotFound) {
 			return errTx
 		}
+		info.MediaType = conversion.MediaType
 		*id, errTx = s.deletionRepository.Create(ctx, info)
 
 		return errTx
@@ -82,8 +83,12 @@ func (s *serv) Add(ctx context.Context, info *model.DeletionInfo) (int64, error)
 	return id, nil
 }
 
-func (s *serv) Pop(ctx context.Context) (*model.Deletion, error) {
-	return s.deletionRepository.FindOldestQueued(ctx)
+func (s *serv) PopImages(ctx context.Context) (*model.Deletion, error) {
+	return s.deletionRepository.FindOldestQueuedImages(ctx)
+}
+
+func (s *serv) PopVideos(ctx context.Context) (*model.Deletion, error) {
+	return s.deletionRepository.FindOldestQueuedVideos(ctx)
 }
 
 func (s *serv) Get(ctx context.Context, fullpath string) (*model.Deletion, error) {

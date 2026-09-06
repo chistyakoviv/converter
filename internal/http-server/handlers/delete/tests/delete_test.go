@@ -161,11 +161,17 @@ func TestDeleteHandler(t *testing.T) {
 			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Add", ctx, tc.deletionInfo).Return(successId, nil).Once()
+				mockDeletionService.On("Get", ctx, tc.deletionReq.Path).Return(&model.Deletion{
+					Id:        successId,
+					Fullpath:  tc.deletionReq.Path,
+					Status:    model.DeletionStatusPending,
+					MediaType: model.MediaTypeImage,
+				}, nil).Once()
 				return mockDeletionService
 			},
 			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.On("TryQueueDeletion").Return(true).Once()
+				mockTaskService.On("TryQueueImageDeletion").Return(true).Once()
 				return mockTaskService
 			},
 		},

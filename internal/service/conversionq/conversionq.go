@@ -45,6 +45,12 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 		return -1, fmt.Errorf("%s: %w", info.Ext, ErrFileTypeNotSupported)
 	}
 
+	mediaType, ok := mediaTypeForExt(info.Ext)
+	if !ok {
+		return -1, fmt.Errorf("%s: %w", info.Ext, ErrFileTypeNotSupported)
+	}
+	info.MediaType = mediaType
+
 	// Assign default format if no target formats are specified
 	if info.ConvertTo == nil {
 		var err error
@@ -109,8 +115,12 @@ func (s *serv) Add(ctx context.Context, info *model.ConversionInfo) (int64, erro
 	return id, nil
 }
 
-func (s *serv) Pop(ctx context.Context) (*model.Conversion, error) {
-	return s.conversionRepository.FindOldestQueued(ctx)
+func (s *serv) PopImages(ctx context.Context) (*model.Conversion, error) {
+	return s.conversionRepository.FindOldestQueuedImages(ctx)
+}
+
+func (s *serv) PopVideos(ctx context.Context) (*model.Conversion, error) {
+	return s.conversionRepository.FindOldestQueuedVideos(ctx)
 }
 
 func (s *serv) Get(ctx context.Context, fullpath string) (*model.Conversion, error) {

@@ -23,6 +23,7 @@ type Conversion struct {
 	Ext       string
 	ConvertTo []ConvertTo
 	Status    int
+	MediaType int
 	ErrorCode int
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
@@ -38,6 +39,14 @@ func (c *Conversion) IsCanceled() bool {
 
 func (c *Conversion) IsPending() bool {
 	return c.Status == ConversionStatusPending
+}
+
+func (c *Conversion) IsImage() bool {
+	return c.MediaType == MediaTypeImage
+}
+
+func (c *Conversion) IsVideo() bool {
+	return c.MediaType == MediaTypeVideo
 }
 
 // Since Go does not support optional parameters, a variadic parameter is used instead.
@@ -90,6 +99,7 @@ type ConversionInfo struct {
 	Path      string
 	Filestem  string
 	Ext       string
+	MediaType int
 	ConvertTo []ConvertTo
 }
 

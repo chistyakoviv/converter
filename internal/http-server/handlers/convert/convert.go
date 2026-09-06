@@ -101,7 +101,20 @@ func New(
 		decoratedLogger.Debug("file added", slog.Int64("id", id))
 
 		// Try to process the file immediately
-		taskService.TryQueueConversion()
+		conversion, err := conversionService.Get(ctx, req.Path)
+		if err != nil {
+			decoratedLogger.Error("failed to get conversion task", slogger.Err(err))
+
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, resp.Error("failed to process file"))
+
+			return
+		}
+		if conversion.IsImage() {
+			taskService.TryQueueImageConversion()
+		} else {
+			taskService.TryQueueVideoConversion()
+		}
 
 		render.JSON(w, r, ConversionResponse{
 			Response: resp.OK(),

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	converterMocks "github.com/chistyakoviv/converter/internal/converter/mocks"
 	"github.com/chistyakoviv/converter/internal/db"
 	"github.com/chistyakoviv/converter/internal/logger/dummy"
 	"github.com/chistyakoviv/converter/internal/model"
@@ -18,15 +19,38 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestTaskServiceProcessQueues(t *testing.T) {
+func TestTaskServiceProcessImageQueues(t *testing.T) {
+	testTaskServiceProcessQueues(t, "image")
+}
+
+func TestTaskServiceProcessVideoQueues(t *testing.T) {
+	testTaskServiceProcessQueues(t, "video")
+}
+
+type queueProcessingTestcase struct {
+	name                  string
+	conversionQeueueLen   int
+	deletionQueueLen      int
+	fileInfo              *model.Conversion
+	deletionInfo          *model.Deletion
+	mediaType             string
+	started               chan struct{}
+	startedOnce           *sync.Once
+	mockConversionService func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService
+	mockDeletionService   func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService
+	mockConverterService  func(tc *queueProcessingTestcase) *converterMocks.MockConverter
+}
+
+func testTaskServiceProcessQueues(t *testing.T, mediaType string) {
 	var (
 		logger                = dummy.NewDummyLogger()
 		conversionPendingInfo = &model.Conversion{
-			Id:       1,
-			Fullpath: "/path/to/file.ext",
-			Path:     "/path/to",
-			Filestem: "file",
-			Ext:      "ext",
+			Id:        1,
+			Fullpath:  "/path/to/file.ext",
+			Path:      "/path/to",
+			Filestem:  "file",
+			Ext:       "ext",
+			MediaType: mediaTypeOf(mediaType),
 			ConvertTo: []model.ConvertTo{
 				{
 					Ext: "jpg",
@@ -38,11 +62,12 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			UpdatedAt: sql.NullTime{},
 		}
 		conversionDoneInfo = &model.Conversion{
-			Id:       1,
-			Fullpath: "/path/to/file.ext",
-			Path:     "/path/to",
-			Filestem: "file",
-			Ext:      "ext",
+			Id:        1,
+			Fullpath:  "/path/to/file.ext",
+			Path:      "/path/to",
+			Filestem:  "file",
+			Ext:       "ext",
+			MediaType: mediaTypeOf(mediaType),
 			ConvertTo: []model.ConvertTo{
 				{
 					Ext: "jpg",
@@ -57,70 +82,60 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			Id:        1,
 			Fullpath:  "/path/to/file.ext",
 			Status:    model.DeletionStatusPending,
+			MediaType: mediaTypeOf(mediaType),
 			ErrorCode: 0,
 			CreatedAt: time.Now(),
 			UpdatedAt: sql.NullTime{},
 		}
 	)
 
-	type testcase struct {
-		name                  string
-		conversionQeueueLen   int
-		deletionQueueLen      int
-		fileInfo              *model.Conversion
-		deletionInfo          *model.Deletion
-		mockConversionService func(tc *testcase) *serviceMocks.MockConversionQueueService
-		mockDeletionService   func(tc *testcase) *serviceMocks.MockDeletionQueueService
-		mockConverterService  func(tc *testcase) *serviceMocks.MockConverterService
-	}
-
-	cases := []testcase{
+	cases := []queueProcessingTestcase{
 		{
 			name: "Empty qeues",
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
 		{
 			name:                "No conversion tasks to process",
 			conversionQeueueLen: 1,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockConversionPop(tc, mockConversionService, nil, db.ErrNotFound)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
 		{
 			name:                "Unknown error when popping from conversion queue",
 			conversionQeueueLen: 1,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, errors.New("unknown error")).Once()
+				mockConversionPop(tc, mockConversionService, nil, errors.New("unknown error"))
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -129,22 +144,22 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			conversionQeueueLen: 1,
 			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
+				mockConversionPop(tc, mockConversionService, tc.fileInfo, nil)
 				mockConversionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath, service.ErrFileQueuedForDeletion).
 					Return(nil).
 					Once()
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockConversionPop(tc, mockConversionService, nil, db.ErrNotFound)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).Return(tc.deletionInfo, nil).Once()
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -153,18 +168,18 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			conversionQeueueLen: 1,
 			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
+				mockConversionPop(tc, mockConversionService, tc.fileInfo, nil)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).Return(tc.deletionInfo, errors.New("unknown error")).Once()
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -173,22 +188,22 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			conversionQeueueLen: 1,
 			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
+				mockConversionPop(tc, mockConversionService, tc.fileInfo, nil)
 				mockConversionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath, service.ErrUnableToConvertFile).
 					Return(nil).
 					Once()
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockConversionPop(tc, mockConversionService, nil, db.ErrNotFound)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).Return(tc.deletionInfo, db.ErrNotFound).Once()
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				mockConverterService.On("Convert", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo).Return(service.NewConverterError("unknown error", service.ErrUnableToConvertFile)).Once()
 				return mockConverterService
 			},
@@ -198,22 +213,22 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			conversionQeueueLen: 1,
 			fileInfo:            conversionPendingInfo,
 			deletionInfo:        deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.fileInfo, nil).Once()
+				mockConversionPop(tc, mockConversionService, tc.fileInfo, nil)
 				mockConversionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).
 					Return(nil).
 					Once()
-				mockConversionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockConversionPop(tc, mockConversionService, nil, db.ErrNotFound)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo.Fullpath).Return(tc.deletionInfo, db.ErrNotFound).Once()
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				mockConverterService.On("Convert", mock.AnythingOfType("*context.cancelCtx"), tc.fileInfo).Return(nil).Once()
 				return mockConverterService
 			},
@@ -221,34 +236,34 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 		{
 			name:             "No deletion tasks to process",
 			deletionQueueLen: 1,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockDeletionPop(tc, mockDeletionService, nil, db.ErrNotFound)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
 		{
 			name:             "Unknown error when popping from deletion queue",
 			deletionQueueLen: 1,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, errors.New("unknown error")).Once()
+				mockDeletionPop(tc, mockDeletionService, nil, errors.New("unknown error"))
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -257,22 +272,22 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			deletionQueueLen: 1,
 			fileInfo:         conversionPendingInfo,
 			deletionInfo:     deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(nil, db.ErrNotFound).Once()
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionPop(tc, mockDeletionService, tc.deletionInfo, nil)
 				mockDeletionService.On("MarkAsCanceled", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath, service.ErrFailedToRemoveFile).
 					Return(nil).
 					Once()
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockDeletionPop(tc, mockDeletionService, nil, db.ErrNotFound)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -281,18 +296,18 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			deletionQueueLen: 1,
 			fileInfo:         conversionPendingInfo,
 			deletionInfo:     deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(nil, errors.New("unknown error")).Once()
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionPop(tc, mockDeletionService, tc.deletionInfo, nil)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -301,46 +316,46 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			deletionQueueLen: 1,
 			fileInfo:         conversionPendingInfo,
 			deletionInfo:     deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(tc.fileInfo, nil).Once()
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionPop(tc, mockDeletionService, tc.deletionInfo, nil)
 				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
 					Return(nil).
 					Once()
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockDeletionPop(tc, mockDeletionService, nil, db.ErrNotFound)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
 		{
-			name:             "Successful conversion task execution",
+			name:             "Successful deletion task execution",
 			deletionQueueLen: 1,
 			fileInfo:         conversionDoneInfo,
 			deletionInfo:     deletionInfo,
-			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
+			mockConversionService: func(tc *queueProcessingTestcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).Return(tc.fileInfo, nil).Once()
 				return mockConversionService
 			},
-			mockDeletionService: func(tc *testcase) *serviceMocks.MockDeletionQueueService {
+			mockDeletionService: func(tc *queueProcessingTestcase) *serviceMocks.MockDeletionQueueService {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(tc.deletionInfo, nil).Once()
+				mockDeletionPop(tc, mockDeletionService, tc.deletionInfo, nil)
 				mockDeletionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), tc.deletionInfo.Fullpath).
 					Return(nil).
 					Once()
-				mockDeletionService.On("Pop", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+				mockDeletionPop(tc, mockDeletionService, nil, db.ErrNotFound)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *queueProcessingTestcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -354,6 +369,10 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 
+			tc.mediaType = mediaType
+			tc.started = make(chan struct{})
+			tc.startedOnce = &sync.Once{}
+
 			mockConversionService := tc.mockConversionService(&tc)
 			mockDeletionService := tc.mockDeletionService(&tc)
 			mockConverterService := tc.mockConverterService(&tc)
@@ -365,8 +384,21 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				mockConverterService,
 			)
 
+			var wg sync.WaitGroup
+			var done = make(chan struct{})
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				close(done)
+				processQueues(taskService, mediaType, ctx)
+			}()
+
+			// Wait for the goroutine to start
+			<-done
+
 			for i := 0; i < tc.conversionQeueueLen; i++ {
-				res := taskService.TryQueueConversion()
+				res := enqueueConversion(taskService, mediaType)
 				if i > 0 {
 					assert.False(t, res)
 				} else {
@@ -375,7 +407,7 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 			}
 
 			for i := 0; i < tc.deletionQueueLen; i++ {
-				res := taskService.TryQueueDeletion()
+				res := enqueueDeletion(taskService, mediaType)
 				if i > 0 {
 					assert.False(t, res)
 				} else {
@@ -383,19 +415,12 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 				}
 			}
 
-			var wg sync.WaitGroup
-			var done = make(chan struct{})
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				close(done)
-				taskService.ProcessQueues(ctx)
-			}()
-
-			// Wait goroutine to start
-			// time.Sleep(100 * time.Millisecond)
-			<-done
+			if tc.conversionQeueueLen+tc.deletionQueueLen > 0 {
+				// Wait until the task is consumed and its processing has started.
+				// Cancelling earlier would race with the worker goroutine's select,
+				// which may pick the cancelled context instead of the queued task.
+				<-tc.started
+			}
 
 			cancel()
 
@@ -408,6 +433,111 @@ func TestTaskServiceProcessQueues(t *testing.T) {
 	}
 }
 
+func TestTaskServiceProcessQueuesConcurrently(t *testing.T) {
+	var (
+		logger      = dummy.NewDummyLogger()
+		ctx, cancel = context.WithCancel(context.Background())
+		videoInfo   = &model.Conversion{
+			Id:        1,
+			Fullpath:  "/path/to/video.mp4",
+			Path:      "/path/to",
+			Filestem:  "video",
+			Ext:       "mp4",
+			MediaType: model.MediaTypeVideo,
+			ConvertTo: []model.ConvertTo{
+				{
+					Ext: "webm",
+				},
+			},
+			Status: model.ConversionStatusPending,
+		}
+		imageInfo = &model.Conversion{
+			Id:        2,
+			Fullpath:  "/path/to/image.jpg",
+			Path:      "/path/to",
+			Filestem:  "image",
+			Ext:       "jpg",
+			MediaType: model.MediaTypeImage,
+			ConvertTo: []model.ConvertTo{
+				{
+					Ext: "webp",
+				},
+			},
+			Status: model.ConversionStatusPending,
+		}
+		videoStarted = make(chan struct{})
+		imageDone    = make(chan struct{})
+		releaseVideo = make(chan struct{})
+	)
+
+	mockConversionService := serviceMocks.NewMockConversionQueueService(t)
+	mockConversionService.On("PopVideos", mock.AnythingOfType("*context.cancelCtx")).Return(videoInfo, nil).Once()
+	mockConversionService.On("PopImages", mock.AnythingOfType("*context.cancelCtx")).Return(imageInfo, nil).Once()
+	mockConversionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), videoInfo.Fullpath).Return(nil).Once()
+	mockConversionService.On("MarkAsDone", mock.AnythingOfType("*context.cancelCtx"), imageInfo.Fullpath).Return(nil).Once()
+	mockConversionService.On("PopVideos", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+	mockConversionService.On("PopImages", mock.AnythingOfType("*context.cancelCtx")).Return(nil, db.ErrNotFound).Once()
+
+	mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
+	mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), videoInfo.Fullpath).Return(nil, db.ErrNotFound).Once()
+	mockDeletionService.On("Get", mock.AnythingOfType("*context.cancelCtx"), imageInfo.Fullpath).Return(nil, db.ErrNotFound).Once()
+
+	mockConverterService := converterMocks.NewMockConverter(t)
+	mockConverterService.On("Convert", mock.AnythingOfType("*context.cancelCtx"), videoInfo).
+		Run(func(args mock.Arguments) {
+			close(videoStarted)
+			<-releaseVideo
+		}).
+		Return(nil).
+		Once()
+	mockConverterService.On("Convert", mock.AnythingOfType("*context.cancelCtx"), imageInfo).
+		Run(func(args mock.Arguments) {
+			close(imageDone)
+		}).
+		Return(nil).
+		Once()
+
+	taskService := task.NewService(
+		logger,
+		mockConversionService,
+		mockDeletionService,
+		mockConverterService,
+	)
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		taskService.ProcessImageQueues(ctx)
+	}()
+	go func() {
+		defer wg.Done()
+		taskService.ProcessVideoQueues(ctx)
+	}()
+
+	// Trigger both media types
+	assert.True(t, taskService.TryQueueVideoConversion())
+	assert.True(t, taskService.TryQueueImageConversion())
+
+	// Video conversion is in progress and blocks
+	<-videoStarted
+
+	// Image conversion must complete while the video conversion is still in progress
+	<-imageDone
+
+	// Release the video conversion
+	close(releaseVideo)
+
+	cancel()
+
+	wg.Wait()
+
+	mockConversionService.AssertExpectations(t)
+	mockDeletionService.AssertExpectations(t)
+	mockConverterService.AssertExpectations(t)
+}
+
 func TestTaskServiceProcessScanfs(t *testing.T) {
 	var (
 		successId int64 = 1
@@ -418,7 +548,7 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 		name                  string
 		mockConversionService func(tc *testcase) *serviceMocks.MockConversionQueueService
 		mockDeletionService   func(tc *testcase) *serviceMocks.MockDeletionQueueService
-		mockConverterService  func(tc *testcase) *serviceMocks.MockConverterService
+		mockConverterService  func(tc *testcase) *converterMocks.MockConverter
 	}
 
 	cases := []testcase{
@@ -431,10 +561,11 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 						"Add",
 						mock.AnythingOfType("*context.cancelCtx"),
 						&model.ConversionInfo{
-							Fullpath: "/files/images/gen.jpg",
-							Path:     "/files/images",
-							Filestem: "gen",
-							Ext:      "jpg",
+							Fullpath:  "/files/images/gen.jpg",
+							Path:      "/files/images",
+							Filestem:  "gen",
+							Ext:       "jpg",
+							MediaType: model.MediaTypeImage,
 						},
 					).
 					Return(successId, nil).
@@ -444,10 +575,11 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 						"Add",
 						mock.AnythingOfType("*context.cancelCtx"),
 						&model.ConversionInfo{
-							Fullpath: "/files/images/gen.png",
-							Path:     "/files/images",
-							Filestem: "gen",
-							Ext:      "png",
+							Fullpath:  "/files/images/gen.png",
+							Path:      "/files/images",
+							Filestem:  "gen",
+							Ext:       "png",
+							MediaType: model.MediaTypeImage,
 						},
 					).
 					Return(successId, nil).
@@ -457,10 +589,11 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 						"Add",
 						mock.AnythingOfType("*context.cancelCtx"),
 						&model.ConversionInfo{
-							Fullpath: "/files/videos/gen.mp4",
-							Path:     "/files/videos",
-							Filestem: "gen",
-							Ext:      "mp4",
+							Fullpath:  "/files/videos/gen.mp4",
+							Path:      "/files/videos",
+							Filestem:  "gen",
+							Ext:       "mp4",
+							MediaType: model.MediaTypeVideo,
 						},
 					).
 					Return(successId, nil).
@@ -471,8 +604,8 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 				mockDeletionService := serviceMocks.NewMockDeletionQueueService(t)
 				return mockDeletionService
 			},
-			mockConverterService: func(tc *testcase) *serviceMocks.MockConverterService {
-				mockConverterService := serviceMocks.NewMockConverterService(t)
+			mockConverterService: func(tc *testcase) *converterMocks.MockConverter {
+				mockConverterService := converterMocks.NewMockConverter(t)
 				return mockConverterService
 			},
 		},
@@ -508,4 +641,69 @@ func TestTaskServiceProcessScanfs(t *testing.T) {
 			mockConverterService.AssertExpectations(t)
 		})
 	}
+}
+
+func mediaTypeOf(mediaType string) int {
+	if mediaType == "video" {
+		return model.MediaTypeVideo
+	}
+	return model.MediaTypeImage
+}
+
+func enqueueConversion(taskService service.TaskService, mediaType string) bool {
+	if mediaType == "video" {
+		return taskService.TryQueueVideoConversion()
+	}
+	return taskService.TryQueueImageConversion()
+}
+
+func enqueueDeletion(taskService service.TaskService, mediaType string) bool {
+	if mediaType == "video" {
+		return taskService.TryQueueVideoDeletion()
+	}
+	return taskService.TryQueueImageDeletion()
+}
+
+func processQueues(taskService service.TaskService, mediaType string, ctx context.Context) {
+	if mediaType == "video" {
+		taskService.ProcessVideoQueues(ctx)
+		return
+	}
+	taskService.ProcessImageQueues(ctx)
+}
+
+func mockConversionPop(
+	tc *queueProcessingTestcase,
+	mockService *serviceMocks.MockConversionQueueService,
+	result *model.Conversion,
+	err error,
+) {
+	method := "PopImages"
+	if tc.mediaType == "video" {
+		method = "PopVideos"
+	}
+	mockService.On(method, mock.AnythingOfType("*context.cancelCtx")).
+		Run(func(args mock.Arguments) {
+			tc.startedOnce.Do(func() { close(tc.started) })
+		}).
+		Return(result, err).
+		Once()
+}
+
+func mockDeletionPop(
+	tc *queueProcessingTestcase,
+	mockService *serviceMocks.MockDeletionQueueService,
+	result *model.Deletion,
+	err error,
+) {
+	method := "PopImages"
+	if tc.mediaType == "video" {
+		method = "PopVideos"
+	}
+	mockService.On(method, mock.AnythingOfType("*context.cancelCtx")).
+		Run(func(args mock.Arguments) {
+			tc.startedOnce.Do(func() { close(tc.started) })
+		}).
+		Return(result, err).
+		Once()
 }

@@ -268,7 +268,7 @@ func TestPopFromConversionQueue(t *testing.T) {
 			conversion: conversion,
 			mockConversionRepository: func(tc *testcase) *repositoryMocks.MockConversionQueueRepository {
 				mockConversionRepository := repositoryMocks.NewMockConversionQueueRepository(t)
-				mockConversionRepository.On("FindOldestQueued", mock.AnythingOfType("context.backgroundCtx")).Return(nil, db.ErrNotFound)
+				mockConversionRepository.On("FindOldestQueuedImages", mock.AnythingOfType("context.backgroundCtx")).Return(nil, db.ErrNotFound)
 				return mockConversionRepository
 			},
 			mockTxManager: func(tc *testcase) *dbMocks.MockTxManager {
@@ -281,7 +281,7 @@ func TestPopFromConversionQueue(t *testing.T) {
 			conversion: conversion,
 			mockConversionRepository: func(tc *testcase) *repositoryMocks.MockConversionQueueRepository {
 				mockConversionRepository := repositoryMocks.NewMockConversionQueueRepository(t)
-				mockConversionRepository.On("FindOldestQueued", mock.AnythingOfType("context.backgroundCtx")).Return(conversion, nil)
+				mockConversionRepository.On("FindOldestQueuedImages", mock.AnythingOfType("context.backgroundCtx")).Return(conversion, nil)
 				return mockConversionRepository
 			},
 			mockTxManager: func(tc *testcase) *dbMocks.MockTxManager {
@@ -307,7 +307,7 @@ func TestPopFromConversionQueue(t *testing.T) {
 				mockConversionRepository,
 			)
 
-			conversion, err := serv.Pop(ctx)
+			conversion, err := serv.PopImages(ctx)
 
 			if tc.err != nil {
 				assert.EqualError(t, err, tc.err.Error())

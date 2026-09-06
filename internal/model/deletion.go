@@ -11,10 +11,16 @@ const (
 	DeletionStatusCanceled = 2
 )
 
+const (
+	MediaTypeImage = 1
+	MediaTypeVideo = 2
+)
+
 type Deletion struct {
 	Id        int64
 	Fullpath  string
 	Status    int
+	MediaType int
 	ErrorCode int
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
@@ -32,6 +38,15 @@ func (c *Deletion) IsPending() bool {
 	return c.Status == DeletionStatusPending
 }
 
+func (c *Deletion) IsImage() bool {
+	return c.MediaType == MediaTypeImage
+}
+
+func (c *Deletion) IsVideo() bool {
+	return c.MediaType == MediaTypeVideo
+}
+
 type DeletionInfo struct {
-	Fullpath string
+	Fullpath  string
+	MediaType int
 }

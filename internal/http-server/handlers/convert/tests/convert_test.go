@@ -250,11 +250,17 @@ func TestConvertHandler(t *testing.T) {
 			mockConversionService: func(tc *testcase) *serviceMocks.MockConversionQueueService {
 				mockConversionService := serviceMocks.NewMockConversionQueueService(t)
 				mockConversionService.On("Add", ctx, tc.conversionInfo).Return(successId, nil).Once()
+				mockConversionService.On("Get", ctx, tc.conversionReq.Path).Return(&model.Conversion{
+					Id:        successId,
+					Fullpath:  tc.conversionReq.Path,
+					Status:    model.ConversionStatusPending,
+					MediaType: model.MediaTypeImage,
+				}, nil).Once()
 				return mockConversionService
 			},
 			mockTaskService: func(tc *testcase) *serviceMocks.MockTaskService {
 				mockTaskService := serviceMocks.NewMockTaskService(t)
-				mockTaskService.On("TryQueueConversion").Return(true).Once()
+				mockTaskService.On("TryQueueImageConversion").Return(true).Once()
 				return mockTaskService
 			},
 		},

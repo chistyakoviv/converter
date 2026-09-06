@@ -19,6 +19,7 @@ const (
 	idColumn        = "id"
 	fullpathColumn  = "fullpath"
 	statusColumn    = "status"
+	mediaTypeColumn = "media_type"
 	errorCodeColumn = "error_code"
 	createdAtColumn = "created_at"
 	updatedAtColumn = "updated_at"
@@ -41,11 +42,13 @@ func (r *repo) Create(ctx context.Context, file *model.DeletionInfo) (int64, err
 	builder := r.sq.Insert(tablename).
 		Columns(
 			fullpathColumn,
+			mediaTypeColumn,
 			createdAtColumn,
 			updatedAtColumn,
 		).
 		Values(
 			file.Fullpath,
+			file.MediaType,
 			ts,
 			ts,
 		).
@@ -92,6 +95,7 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Dele
 		&file.Id,
 		&file.Fullpath,
 		&file.Status,
+		&file.MediaType,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,
@@ -106,13 +110,22 @@ func (r *repo) FindByFullpath(ctx context.Context, fullpath string) (*model.Dele
 	return &file, nil
 }
 
-func (r *repo) FindOldestQueued(ctx context.Context) (*model.Deletion, error) {
+func (r *repo) FindOldestQueuedImages(ctx context.Context) (*model.Deletion, error) {
+	return r.findOldestQueued(ctx, model.MediaTypeImage)
+}
+
+func (r *repo) FindOldestQueuedVideos(ctx context.Context) (*model.Deletion, error) {
+	return r.findOldestQueued(ctx, model.MediaTypeVideo)
+}
+
+func (r *repo) findOldestQueued(ctx context.Context, mediaType int) (*model.Deletion, error) {
 	builder := r.sq.
 		Select("*").
 		From(tablename).
 		OrderBy(fmt.Sprintf("%s ASC", updatedAtColumn)).
 		Where(
 			sq.Eq{statusColumn: model.DeletionStatusPending},
+			sq.Eq{mediaTypeColumn: mediaType},
 		).
 		Limit(1)
 
@@ -131,6 +144,7 @@ func (r *repo) FindOldestQueued(ctx context.Context) (*model.Deletion, error) {
 		&file.Id,
 		&file.Fullpath,
 		&file.Status,
+		&file.MediaType,
 		&file.ErrorCode,
 		&file.CreatedAt,
 		&file.UpdatedAt,

@@ -142,7 +142,7 @@ func TestPopFromDeletionQueue(t *testing.T) {
 			deletion: deletion,
 			mockDeletionRepository: func(tc *testcase) *repositoryMocks.MockDeletionQueueRepository {
 				mockDeletionRepository := repositoryMocks.NewMockDeletionQueueRepository(t)
-				mockDeletionRepository.On("FindOldestQueued", mock.AnythingOfType("context.backgroundCtx")).Return(nil, db.ErrNotFound)
+				mockDeletionRepository.On("FindOldestQueuedImages", mock.AnythingOfType("context.backgroundCtx")).Return(nil, db.ErrNotFound)
 				return mockDeletionRepository
 			},
 			mockConversionRepository: func(tc *testcase) *repositoryMocks.MockConversionQueueRepository {
@@ -159,7 +159,7 @@ func TestPopFromDeletionQueue(t *testing.T) {
 			deletion: deletion,
 			mockDeletionRepository: func(tc *testcase) *repositoryMocks.MockDeletionQueueRepository {
 				mockDeletionRepository := repositoryMocks.NewMockDeletionQueueRepository(t)
-				mockDeletionRepository.On("FindOldestQueued", mock.AnythingOfType("context.backgroundCtx")).Return(deletion, nil)
+				mockDeletionRepository.On("FindOldestQueuedImages", mock.AnythingOfType("context.backgroundCtx")).Return(deletion, nil)
 				return mockDeletionRepository
 			},
 			mockConversionRepository: func(tc *testcase) *repositoryMocks.MockConversionQueueRepository {
@@ -192,7 +192,7 @@ func TestPopFromDeletionQueue(t *testing.T) {
 				mockConversionRepository,
 			)
 
-			conversion, err := serv.Pop(ctx)
+			conversion, err := serv.PopImages(ctx)
 
 			if tc.err != nil {
 				assert.EqualError(t, err, tc.err.Error())
