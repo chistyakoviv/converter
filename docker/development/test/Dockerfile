@@ -26,6 +26,9 @@ RUN apt-get install -y \
 
 RUN apt-get install -y \
     libaom-dev \
+    aom-tools \
+    libyuv-dev \
+    libwebm-dev \
     ffmpeg
 
 RUN apt-get install -y \
@@ -39,9 +42,9 @@ RUN apt-get install -y \
     libx264-dev
 
 # Need to be available at build time
-ARG VIPS_VERSION=8.16.0
+ARG VIPS_VERSION=8.18.2
 ARG VIPS_URL=https://github.com/libvips/libvips/releases/download
-ARG HEIF_VERSION=1.19.5
+ARG HEIF_VERSION=1.23.0
 ARG HEIF_URL=https://github.com/strukturag/libheif/releases/download
 
 # Need to be available at run time and build time
