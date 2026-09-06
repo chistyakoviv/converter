@@ -2,7 +2,7 @@ FROM golang:1.27.1-alpine3.24
 
 # Do not use MOCKERY_VERSION, as it causes mockery to fail with a version parsing error.
 ENV MOCKERY_INSTALL_VERSION=2.50.0
-ENV GOLANGCI_LINT_VERSION=2.11.2
+ENV GOLANGCI_LINT_VERSION=2.13.2
 
 RUN apk add --no-cache \
     curl \
